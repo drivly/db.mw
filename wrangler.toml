@@ -1,5 +1,5 @@
 name = "db-mw"
-# route = { pattern = "*/*", zone_name = "templates.do" }
+route = { pattern = "*/*", zone_name = "dbs.do" }
 main = "worker.js"
 usage_model = "unbound"
 compatibility_date = "2022-09-23"
