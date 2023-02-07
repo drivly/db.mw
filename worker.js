@@ -1,37 +1,37 @@
 export const api = {
-  icon: '🚀',
-  name: 'templates.do',
-  description: 'Cloudflare Worker Template',
-  url: 'https://templates.do/api',
-  type: 'https://apis.do/templates',
-  endpoints: {
-    listCategories: 'https://templates.do/api',
-    getCategory: 'https://templates.do/:type',
-  },
-  site: 'https://templates.do',
+  name: 'db.mw',
+  description: '🚀 Database API',
+  url: 'https://db.mw/api',
+  type: 'https://apis.do/data',
   login: 'https://templates.do/login',
-  signup: 'https://templates.do/signup',
-  subscribe: 'https://templates.do/subscribe',
-  repo: 'https://github.com/drivly/templates.do',
+  repo: 'https://github.com/drivly/db.mw',
 }
 
-export const gettingStarted = [
-  `If you don't already have a JSON Viewer Browser Extension, get that first:`,
-  `https://extensions.do`,
-]
+// export const gettingStarted = [
+//   `If you don't already have a JSON Viewer Browser Extension, get that first:`,
+//   `https://extensions.do`,
+// ]
 
-export const examples = {
-  listItems: 'https://templates.do/worker',
-}
+// export const examples = {
+//   listItems: 'https://templates.do/worker',
+// }
 
 export default {
   fetch: async (req, env) => {
     const { user, hostname, pathname, rootPath, pathSegments, query } = await env.CTX.fetch(req).then(res => res.json())
-    if (rootPath) return json({ api, gettingStarted, examples, user })
+//     if (rootPath) return json({ api, gettingStarted, examples, user })
     
-    // TODO: Implement this
-    const [ resource, id ] = pathSegments
-    const data = { resource, id, hello: user.city }
+    const [ cluster = 'src', database = 'edmunds', collection = 'makes', action = 'findOne' ] = pathSegments
+    const data = fetch(`https://data.mongodb-api.com/app/data-ahvqx/endpoint/data/v1/action/${action}`, {
+      headers: { "Api-Key": env.MONGO_API_KEY, "Content-Type": "application/json" },
+      method: "POST",
+      body: JSON.stringify({
+          collection:'<COLLECTION_NAME>',
+          database: '<DATABASE_NAME>',
+          dataSource: 'vin',
+          projection: { _id : 1 }
+      })
+    }).then(res => res.json())
     
     return json({ api, data, user })
   }
