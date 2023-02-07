@@ -1,4 +1,4 @@
-name = "templates-do"
+name = "db-mw"
 # route = { pattern = "*/*", zone_name = "templates.do" }
 main = "worker.js"
 usage_model = "unbound"
