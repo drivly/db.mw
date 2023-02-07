@@ -43,7 +43,7 @@ export default {
     
     const requestTime = new Date() - start
     
-    return json({ api, requestTime,  collection, database, dataSource, action, data, user })
+    return json({ api, requestTime, pathSegments, collection, database, dataSource, action, data, user })
   }
 }
 
