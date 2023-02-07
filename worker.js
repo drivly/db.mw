@@ -23,7 +23,12 @@ export default {
     
     const start = new Date()
     
+//     const projection = query?.select?.map
+    
     const [ dataSource = 'src', database = 'edmunds', collection = 'makes', action = 'findOne' ] = pathSegments
+    
+    const {  }
+    
     const data = await fetch(`https://data.mongodb-api.com/app/data-ahvqx/endpoint/data/v1/action/${action}`, {
       headers: { "Api-Key": env.MONGO_API_KEY, "Content-Type": "application/json" },
       method: "POST",
@@ -31,13 +36,14 @@ export default {
           collection,
           database,
           dataSource,
+          filter: query,
           projection: { _id : 1 }
       })
     }).then(res => res.json())
     
     const requestTime = new Date() - start
     
-    return json({ api, requestTime, data, user })
+    return json({ api, requestTime,  collection, database, dataSource, action, data, user })
   }
 }
 
