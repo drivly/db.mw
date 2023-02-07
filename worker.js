@@ -36,8 +36,8 @@ export default {
           collection,
           database,
           dataSource,
-          filter: query,
-          projection: { _id : 1 }
+          filter: action.startsWith('find') ? query : undefined,
+//           projection: { _id : 1 }
       })
     }).then(res => res.json())
     
