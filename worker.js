@@ -24,7 +24,7 @@ export default {
     const start = new Date()
     
     const [ dataSource = 'src', database = 'edmunds', collection = 'makes', action = 'findOne' ] = pathSegments
-    const data = fetch(`https://data.mongodb-api.com/app/data-ahvqx/endpoint/data/v1/action/${action}`, {
+    const data = await fetch(`https://data.mongodb-api.com/app/data-ahvqx/endpoint/data/v1/action/${action}`, {
       headers: { "Api-Key": env.MONGO_API_KEY, "Content-Type": "application/json" },
       method: "POST",
       body: JSON.stringify({
