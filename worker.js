@@ -21,6 +21,8 @@ export default {
     const { user, hostname, pathname, rootPath, pathSegments, query } = await env.CTX.fetch(req).then(res => res.json())
 //     if (rootPath) return json({ api, gettingStarted, examples, user })
     
+    const start = new Date()
+    
     const [ dataSource = 'src', database = 'edmunds', collection = 'makes', action = 'findOne' ] = pathSegments
     const data = fetch(`https://data.mongodb-api.com/app/data-ahvqx/endpoint/data/v1/action/${action}`, {
       headers: { "Api-Key": env.MONGO_API_KEY, "Content-Type": "application/json" },
@@ -33,7 +35,9 @@ export default {
       })
     }).then(res => res.json())
     
-    return json({ api, data, user })
+    const requestTime = new Date() - start
+    
+    return json({ api, requestTime, data, user })
   }
 }
 
