@@ -18,32 +18,36 @@ export const api = {
 
 export default {
   fetch: async (req, env) => {
-    const { user, hostname, pathname, rootPath, pathSegments, query } = await env.CTX.fetch(req).then(res => res.json())
-//     if (rootPath) return json({ api, gettingStarted, examples, user })
-    
-    const start = new Date()
-    
-//     const projection = query?.select?.map
-    
-    const [ dataSource = 'src', database = 'edmunds', collection = 'makes', action = 'findOne' ] = pathSegments
-    
-//     const {  }
-    
-    const data = await fetch(`https://data.mongodb-api.com/app/data-ahvqx/endpoint/data/v1/action/${action}`, {
-      headers: { "Api-Key": env.MONGO_API_KEY, "Content-Type": "application/json" },
-      method: "POST",
-      body: JSON.stringify({
-          collection,
-          database,
-          dataSource,
-          filter: action.startsWith('find') ? query : undefined,
-//           projection: { _id : 1 }
-      })
-    }).then(res => res.json())
-    
-    const requestTime = new Date() - start
-    
-    return json({ api, requestTime, pathSegments, collection, database, dataSource, action, data, user })
+    try {
+      const { user, hostname, pathname, rootPath, pathSegments, query } = await env.CTX.fetch(req).then(res => res.json())
+  //     if (rootPath) return json({ api, gettingStarted, examples, user })
+
+      const start = new Date()
+
+  //     const projection = query?.select?.map
+
+      const [ dataSource = 'src', database = 'edmunds', collection = 'makes', action = 'findOne' ] = pathSegments
+
+  //     const {  }
+
+      const data = await fetch(`https://data.mongodb-api.com/app/data-ahvqx/endpoint/data/v1/action/${action}`, {
+        headers: { "Api-Key": env.MONGO_API_KEY, "Content-Type": "application/json" },
+        method: "POST",
+        body: JSON.stringify({
+            collection,
+            database,
+            dataSource,
+            filter: action.startsWith('find') ? query : undefined,
+  //           projection: { _id : 1 }
+        })
+      }).then(res => res.json())
+
+      const requestTime = new Date() - start
+
+      return json({ api, requestTime, pathSegments, collection, database, dataSource, action, data, user })
+     } catch ({ message, stack }) {
+      return json({ error: { message, stack }}) 
+    }
   }
 }
 
