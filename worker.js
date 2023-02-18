@@ -16,7 +16,7 @@ export default {
 
       const start = new Date()
 
-      const [ dataSource = 'api', database, collection ] = pathSegments
+      const [ dataSource = 'api', database, collection, action ] = pathSegments
 
       const data = await fetch('https://mongo.do/api' + pathname).then(res => res.json())
 
