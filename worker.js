@@ -7,14 +7,6 @@ export const api = {
   repo: 'https://github.com/drivly/db.mw',
 }
 
-// export const gettingStarted = [
-//   `If you don't already have a JSON Viewer Browser Extension, get that first:`,
-//   `https://extensions.do`,
-// ]
-
-// export const examples = {
-//   listItems: 'https://templates.do/worker',
-// }
 
 export default {
   fetch: async (req, env) => {
@@ -23,8 +15,6 @@ export default {
   //     if (rootPath) return json({ api, gettingStarted, examples, user })
 
       const start = new Date()
-
-  //     const projection = query?.select?.map
 
       const [ dataSource = 'api', database, collection ] = pathSegments
 
