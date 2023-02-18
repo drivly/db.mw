@@ -34,9 +34,9 @@ export default {
 
       return json({ api, requestTime, pathSegments, collection, database, dataSource, action, data, user })
      } catch ({ message, stack }) {
-      return json({ error: { message, stack }}) 
+      return json({ error: { message, stack }}, 500) 
     }
   }
 }
 
-const json = obj => new Response(JSON.stringify(obj, null, 2), { headers: { 'content-type': 'application/json; charset=utf-8' }})
+const json = (obj, status) => new Response(JSON.stringify(obj, null, 2), { status, headers: { 'content-type': 'application/json; charset=utf-8' }})
