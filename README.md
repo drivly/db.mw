@@ -18,3 +18,6 @@ List all available databases
 
 https://db.mw
 
+Create a new database
+
+https://db.mw/new -> https://w7trk.db.mw
