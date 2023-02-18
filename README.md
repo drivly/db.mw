@@ -12,6 +12,7 @@
     "repo": "https://github.com/drivly/db.mw"
   }
 }
+```
 
 List all available databases 
 
