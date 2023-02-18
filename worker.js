@@ -26,21 +26,9 @@ export default {
 
   //     const projection = query?.select?.map
 
-      const [ dataSource = 'src', database = 'edmunds', collection = 'makes', action = 'findOne' ] = pathSegments
+      const [ dataSource = 'api', database, collection ] = pathSegments
 
-  //     const {  }
-
-      const data = await fetch(`https://data.mongodb-api.com/app/data-ahvqx/endpoint/data/v1/action/${action}`, {
-        headers: { "Api-Key": env.MONGO_API_KEY, "Content-Type": "application/json" },
-        method: "POST",
-        body: JSON.stringify({
-            collection,
-            database,
-            dataSource,
-            filter: action.startsWith('find') ? query : undefined,
-  //           projection: { _id : 1 }
-        })
-      }).then(res => res.json())
+      const data = await fetch('https://mongo.do/api' + pathname).then(res => res.json())
 
       const requestTime = new Date() - start
 
