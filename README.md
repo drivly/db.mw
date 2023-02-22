@@ -5,11 +5,12 @@
 - *[Graph](#):* model relationships between things as `[subject] [verb] [object]` & query graph traversals
 - *[Search](#):* full-text search across data stored in relational, document, or graph databases
 
-The [Multi World Database](https://db.mw) provides a simple yet extremely powerful set of APIs and SDKs 
+[DB.MW](https://db.mw), the [Multi World Database](https://db.mw), provides a simple yet extremely powerful set of APIs and SDKs 
 
 - [Hypermedia-driven REST API](https://db.mw/api) at https://db.mw/api
 - [GraphQL API & Query UI](https://db.mw/graphql) at https://db.mw/graphql
 - [Javascript/Typescript SDK](https://npmjs.com/db.mw) on [NPM](https://npmjs.com/db.mw) and at https://pkg.do/db.mw
+
 
 
 ```json
