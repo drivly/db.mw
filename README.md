@@ -11,6 +11,30 @@ The [Multi World Database](https://db.mw), provides a simple yet extremely power
 - [GraphQL API & Query UI](https://db.mw/graphql) at https://db.mw/graphql
 - [Javascript/Typescript SDK](https://npmjs.com/db.mw) on [NPM](https://npmjs.com/db.mw) and at https://pkg.do/db.mw
 
+The structure, schemas, primary keys, relationships, data sources, and seed data is defined in [GraphDL](https://graphdl.org)
+
+```yaml
+User:
+ _name: ${name} <${email}>
+ _icon: 🧑
+ name:  string
+ email: email
+ image: url
+ posts: [Post.Author]
+ 
+Post:
+ _id:         slugify(Title)
+ _name:       title
+ _icon:       📋
+ title:       string
+ description: string
+ tags:        [string]
+ content:     markdown
+ createdAt:   createdAt()
+ createdBy:   createdBy()
+ author:      User.Email
+```
+
 The backend data storage and query capabilities are supported through a variety of database providers:
 
 - [Prisma](#) supports the [Relational World](#) on [Postgres](#), [MySQL](#), [Mongo](#), [SQL Server](#), [SQLite](#) & [Cockroach DB](#)
