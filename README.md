@@ -14,7 +14,7 @@ The [Multi World Database](https://db.mw), provides a simple yet extremely power
 The backend data storage and query capabilities are supported through a variety of database providers:
 
 - [Prisma](#) supports the [Relational World](#) on [Postgres](#), [MySQL](#), [Mongo](#), [SQL Server](#), [SQLite](#) & [Cockroach DB](#)
-- [Mongo](#) supports the [Relational World](#) via Prisma, the [Document World](#) and [Graph World](#) via [mongo.do](https://mongo.do), and the [Search World] via [Mongo Atlas](#)
+- [Mongo](#) supports the [Relational World](#) via [Prisma](#), the [Document](#) and [Graph](#) Worlds via [mongo.do](https://mongo.do), and the [Search](#) via [Mongo Atlas](#)
 
 ```json
 {
