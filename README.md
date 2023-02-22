@@ -1,11 +1,11 @@
-# [db.mw](https://db.mw) - The Multi World Database
+# [db.mw](https://db.mw) - [The Multi World Database](https://db.mw)
 
 - *[Relational](#):* traditional RDMS that maintain relational integrity & enforce schema and foreign key constraints
 - *[Document](#):* flexible document database to support flexible schema & embedded objects
 - *[Graph](#):* model relationships between things as `[subject] [verb] [object]` & query graph traversals
 - *[Search](#):* full-text search across data stored in relational, document, or graph databases
 
-[db.mw](https://db.mw), the [Multi World Database](https://db.mw), provides a simple yet extremely powerful set of APIs and SDKs 
+The [Multi World Database](https://db.mw), provides a simple yet extremely powerful set of APIs and SDKs 
 
 - [Hypermedia-driven REST API](https://db.mw/api) at https://db.mw/api
 - [GraphQL API & Query UI](https://db.mw/graphql) at https://db.mw/graphql
