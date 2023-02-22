@@ -64,6 +64,14 @@ Create a new database
 
 https://db.mw/new -> https://w7trk.db.mw
 
+Create a new database with custom subdomain
+
+https://db.mw/new/northwind -> https://northwind.driv.ly
+
+Create a new database with custom domain
+
+https://db.mw/new/db.driv.ly -> https://db.driv.ly
+
 Create a new database with a specific name
 
 https://db.mw/new?name=northwind -> https://northwind.db.mw
