@@ -1,4 +1,16 @@
-# db.mw - Database Middleware
+# [db.mw](https://db.mw) - Multi World Database (Relational, Document, Graph, & Search)
+
+- *Relational:* traditional RDMS that maintain relational integrity & enforce schema and foreign key constraints
+- *Document:* flexible document database to support flexible schema & embedded objects
+- *Graph:* model relationships between things as `[subject] [verb] [object]` & query graph traversals
+- *Search:* full-text search across data stored in relational, document, or graph databases
+
+The [Multi World Database](https://db.mw) provides a simple yet extremely powerful set of APIs and SDKs 
+
+- Hypermedia-driven REST API at https://db.mw/api
+- GraphQL API & Query UI at https://db.mw/graphql
+- Javascript/Typescript SDK on NPM and at https://pkg.do/db.mw
+
 
 ```json
 {
