@@ -13,6 +13,9 @@ export default {
     try {
       const { user, hostname, pathname, rootPath, pathSegments, query } = await env.CTX.fetch(req).then(res => res.json())
   //     if (rootPath) return json({ api, gettingStarted, examples, user })
+      
+      if (!user.authenticated) return user?.browser ? Response.redirect(origin + '/login?redirect_uri=' + encodeURIComponent(req.url)) :
+                                                      json({ api, error: 'Unauthorized', login: origin + '/login' }, 401)
 
       const start = new Date()
 
@@ -29,4 +32,4 @@ export default {
   }
 }
 
-const json = (obj, status) => new Response(JSON.stringify(obj, null, 2), { status, headers: { 'content-type': 'application/json; charset=utf-8' }})
+const json = (obj, status = 200) => new Response(JSON.stringify(obj, null, 2), { status, headers: { 'content-type': 'application/json; charset=utf-8' }})
