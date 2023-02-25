@@ -44,7 +44,7 @@ export default {
                      method == 'DELETE' ? 'deleteOne' : 'find'
       
       
-      const headers = { 'api-key': env.DATA_API_KEY }
+      const headers = { 'api-key': env.MONGO_API_KEY }
       const data => await fetch('https://data.mongodb-api.com/app/data-ahvqx/endpoint/data/v1/action/' + action, { 
         headers, 
         method: 'POST', 
