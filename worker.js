@@ -44,12 +44,7 @@ export default {
                      method == 'PATCH' ? 'updateOne' :
                      method == 'DELETE' ? 'deleteOne' : 'find'
       
-      
-      const headers = { 'api-key': env.MONGO_API_KEY }
-      const data = await fetch('https://data.mongodb-api.com/app/data-ahvqx/endpoint/data/v1/action/' + action, { 
-        headers, 
-        method: 'POST', 
-        body: JSON.stringify({ 
+      const databaseQuery = { 
           dataSource: 'api',
           database: 'db',
           collection: 'resources',
@@ -57,7 +52,13 @@ export default {
           filter,
           skip,
           limit,
-        }),
+        }
+      
+      const headers = { 'api-key': env.MONGO_API_KEY }
+      const data = await fetch('https://data.mongodb-api.com/app/data-ahvqx/endpoint/data/v1/action/' + action, { 
+        headers, 
+        method: 'POST', 
+        body: JSON.stringify(databaseQuery),
       }).then(res => res.json())
 
 
@@ -65,7 +66,7 @@ export default {
 
       const requestTime = new Date() - start
 
-      return json({ api, requestTime, project, resource, id, action, data, user })
+      return json({ api, requestTime, project, resource, id, action, data, databaseQuery, user })
      } catch ({ message, stack }) {
       return json({ error: { message, stack }}, 500) 
     }
