@@ -20,12 +20,13 @@ export default {
       const start = new Date()
 
       const [ dataSource = 'api', database, collection, action ] = pathSegments
+      const project = subdomain
 
       const data = await fetch('https://mongo.do/api' + pathname).then(res => res.json())
 
       const requestTime = new Date() - start
 
-      return json({ api, requestTime, pathSegments, collection, database, dataSource, action, data, user })
+      return json({ api, requestTime, subdomain, pathSegments, project, collection, database, dataSource, action, data, user })
      } catch ({ message, stack }) {
       return json({ error: { message, stack }}, 500) 
     }
