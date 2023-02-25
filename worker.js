@@ -16,8 +16,8 @@ export default {
       
       if (pathname.startsWith('/_')) return fetch('https://ui.db.mw' + pathname + search)
       
-//       if (!user.authenticated) return user?.browser ? Response.redirect(origin + '/login?redirect_uri=' + encodeURIComponent(req.url)) :
-//                                                       json({ api, error: 'Unauthorized', login: origin + '/login' }, 401)
+      if (!user.authenticated) return user?.browser ? Response.redirect(origin + '/login') :
+                                                      json({ api, error: 'Unauthorized', login: origin + '/login' }, 401)
       
       const start = new Date()
       
