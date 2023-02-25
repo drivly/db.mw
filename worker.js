@@ -14,7 +14,8 @@ export default {
       const { user, method, origin, subdomain, hostname, pathname, url, rootPath, pathSegments, search, query, body } = await env.CTX.fetch(req).then(res => res.json())
   //     if (rootPath) return json({ api, gettingStarted, examples, user })
       
-      if (pathname.startsWith('/_')) return fetch('https://ui.db.mw' + pathname + search)
+      if (pathname == ('/_')) return fetch('https://ui.db.mw')
+      if (pathname.startsWith('/_next/')) return fetch('https://ui.db.mw' + pathname + search)
       
       if (!user.authenticated) return user?.browser ? Response.redirect(origin + '/login') :
                                                       json({ api, error: 'Unauthorized', login: origin + '/login' }, 401)
