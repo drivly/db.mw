@@ -11,7 +11,7 @@ export const api = {
 export default {
   fetch: async (req, env) => {
     try {
-      const { user, method, subdomain, hostname, pathname, url, rootPath, pathSegments, search, query, body } = await env.CTX.fetch(req).then(res => res.json())
+      const { user, method, origin, subdomain, hostname, pathname, url, rootPath, pathSegments, search, query, body } = await env.CTX.fetch(req).then(res => res.json())
   //     if (rootPath) return json({ api, gettingStarted, examples, user })
       
       if (pathname.startsWith('/_')) return fetch('https://ui.db.mw' + pathname + search)
