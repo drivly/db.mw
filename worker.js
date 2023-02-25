@@ -58,7 +58,7 @@ export default {
           skip,
           limit,
         }),
-      })
+      }).then(res => res.json())
 
 
 //       const data = await fetch('https://mongo.do/api' + pathname).then(res => res.json())
