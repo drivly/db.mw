@@ -19,7 +19,7 @@ export default {
       
       const start = new Date()
       
-      const [ resource, id, action ] = pathSegments
+      const [ resource, id, getAction ] = pathSegments
       const project = subdomain ?? 'ui'
       
       let { limit, skip, page = 1, pageSize = 100, sort, fields, ...filter } = query
@@ -37,7 +37,7 @@ export default {
       
       const document = method == 'GET' ? undefined : { _id: `${project}/${resource}/${id}`, project, resource, id, data: body, created, createdBy, updated, updatedBy }
       
-      const action = method == 'GET' ? (id ? 'findOne' : 'find') :
+      const action = method == 'GET' ? (getAction ?? id ? 'findOne' : 'find') :
                      method == 'POST' ? 'insertOne' :
                      method == 'PUT' ? 'updateOne' :
                      method == 'PATCH' ? 'updateOne' :
