@@ -28,7 +28,7 @@ export default {
       let { limit, skip, page = 1, pageSize = 100, sort, fields, ...filter } = query
       
       limit = limit ? parseInt(limit) : parseInt(pageSize)
-      skip = skip ? parseInt(skip) : parseInt(page) * (parseInt(pageSize) - 1)
+      skip = skip ? parseInt(skip) : (parseInt(page) - 1) * parseInt(pageSize)
       
       const created = method == 'POST ' ? start : undefined
       const createdBy = method == 'POST ' ? user.email : undefined
