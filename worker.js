@@ -11,7 +11,7 @@ export const api = {
 export default {
   fetch: async (req, env) => {
     try {
-      const { user, hostname, pathname, rootPath, pathSegments, query } = await env.CTX.fetch(req).then(res => res.json())
+      const { user, subdomain, hostname, pathname, rootPath, pathSegments, query } = await env.CTX.fetch(req).then(res => res.json())
   //     if (rootPath) return json({ api, gettingStarted, examples, user })
       
       if (!user.authenticated) return user?.browser ? Response.redirect(origin + '/login?redirect_uri=' + encodeURIComponent(req.url)) :
