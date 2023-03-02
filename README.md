@@ -9,7 +9,7 @@ The [Multi World Database](https://db.mw), provides a simple yet extremely power
 
 - [Hypermedia-driven REST API](https://db.mw/api) at https://db.mw/api
 - [GraphQL API & Query UI](https://db.mw/graphql) at https://db.mw/graphql
-- [Javascript/Typescript SDK](https://npmjs.com/db.mw) on [NPM](https://npmjs.com/db.mw) and at https://pkg.do/db.mw
+- [Javascript/Typescript SDK](https://npmjs.com/db.mw) with https://sdk.co and published on [NPM](https://npmjs.com/db.mw) and at https://pkg.do/db.mw
 
 The structure, schemas, primary keys, relationships, data sources, and seed data is defined in [GraphDL](https://graphdl.org)
 
