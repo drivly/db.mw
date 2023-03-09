@@ -25,12 +25,23 @@ export default {
       }
     )
 
-    const graph = await client
+    const hostname = new URL(req.url).hostname
+
+    let graph = await client
       .db('db')
       .collection('graphs')
       .findOne({
-        _id: 'northwind.graphdl.org'
+        _id: hostname
       })
+
+    if (!graph) {
+      graph = await client
+        .db('db')
+        .collection('graphs')
+        .findOne({
+          _id: 'northwind.graphdl.org'
+        })
+    }
 
     if (graph._seed && !graph._seeded) {
       // We have no data actually in the resources collection for this graph.
