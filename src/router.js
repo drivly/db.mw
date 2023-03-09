@@ -7,6 +7,17 @@ router.use('*', async (c, next) => {
   const req = c.req.raw
   const env = c.env
 
+  if (req.method == 'OPTIONS') {
+    return new Response(null, {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, Cookie, X-Forwarded-Proto, X-Forwarded-For',
+        'Access-Control-Max-Age': 86400,
+      }, 
+    })
+  }
+
   const patch = new Request(
     req.url,
     {
@@ -47,6 +58,11 @@ router.use('*', async (c, next) => {
   globalThis.hostname = hostname
 
   await next()
+
+  c.res.headers.set('Access-Control-Allow-Origin', '*')
+  c.res.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+  c.res.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cookie, X-Forwarded-Proto, X-Forwarded-For')
+  c.res.headers.set('Access-Control-Max-Age', 86400)
 })
 
 export default router
