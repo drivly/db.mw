@@ -8,3 +8,17 @@ logpush = true
 services = [
   { binding = "CTX", service = "ctx-do", environment = "production" }
 ]
+
+workers_dev = false
+
+[build]
+command = "npm run build"
+ 
+[build.upload]
+format = "modules"
+
+[miniflare]
+kv_persist = "./data/"
+
+[miniflare.mounts]
+ctx-do = "../ctx.do"

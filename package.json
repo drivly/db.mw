@@ -1,0 +1,27 @@
+{
+  "name": "db.mw",
+  "version": "1.0.0",
+  "description": "- **[Relational](#):** traditional RDMS that maintain relational integrity & enforce schema and foreign key constraints - **[Document](#):** flexible document database to support flexible schema & embedded objects - **[Graph](#):** model relationships between things as `[subject] [verb] [object]` & query graph traversals - **[Search](#):** full-text search across data stored in relational, document, or graph databases",
+  "main": "dist/index.mjs",
+  "module": "dist/index.mjs",
+  "scripts": {
+    "build": "esbuild ./src/worker.js --bundle --format=esm --outfile=dist/index.mjs  --loader:.html=text --define:process.env.HMAC_SECRET=\"'$( echo $HMAC_SECRET )'\"",
+    "dev": "npx miniflare@latest --watch",
+    "format": "prettier --write '**/*.{js,css,json,md}'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/drivly/db.mw.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/drivly/db.mw/issues"
+  },
+  "homepage": "https://github.com/drivly/db.mw#readme",
+  "dependencies": {
+    "@drivly/mongo-fetch": "^1.4.0",
+    "esbuild": "^0.17.11",
+    "hono": "^3.0.3"
+  }
+}
