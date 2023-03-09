@@ -1,6 +1,6 @@
 name = "db-mw"
 # routes = [{ pattern = "*db.mw/*", zone_name = "db.mw" },{ pattern = "*/*", zone_name = "db.mw" }]
-main = "worker.js"
+main = "./dist/index.mjs"
 usage_model = "unbound"
 compatibility_date = "2023-01-01"
 logpush = true
