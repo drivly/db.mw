@@ -63,6 +63,7 @@ router.get('/', async c => {
     },
     data: {
       nouns,
+      graph: c.graph,
     },
     user: c.user,
   })
