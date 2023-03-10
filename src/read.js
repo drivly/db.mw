@@ -1,6 +1,7 @@
 // Read operations for the database
 
 import router from './router.js'
+import { nanoid } from './utils.js'
 
 const processResult = (obj, noun, isExpanded) => {
   // We need to make all fields with underlines at the top of the object
@@ -26,6 +27,17 @@ const processResult = (obj, noun, isExpanded) => {
   for (const key in obj) {
     if (!key.startsWith('_')) {
       result[key] = obj[key]
+    }
+  }
+
+  // Look through every key in the object, looking for an array with a `_noun` property in the object.
+  // Then run the processResult function on that array and replace it with the result.
+
+  for (const key in result) {
+    if (Array.isArray(result[key])) {
+      if (result[key][0] && result[key][0]._noun) {
+        result[key] = result[key].map(item => processResult(item, item._noun, true))
+      }
     }
   }
 
@@ -65,6 +77,14 @@ router.get('/', async c => {
       nouns,
       graph: c.graph,
     },
+    user: c.user,
+  })
+})
+
+router.get('/graph', async c => {
+  return c.json({
+    api: router.api,
+    data: router.graph,
     user: c.user,
   })
 })
@@ -123,13 +143,110 @@ router.get('/:noun', async c => {
     pipeline.push({ $limit: 100 })
   }
 
+  const nounSpec = router.graph[noun]
+
+  // Process the spec and find lookups
+  const lookups = []
+
+  for (const key in nounSpec) {
+    const value = nounSpec[key]
+
+    if (Array.isArray(value)) {
+      if (value[0].includes('->')) {
+        const [lookup, lookupField] = value[0].split('->')
+
+        // Find the verb that connects the two nouns
+        let verb = Object.keys(router.graph).find(key => {
+          const spec = router.graph[key]
+
+          if (spec._object === undefined) return false
+
+          return ([
+            ( spec._object == noun && spec._subject == lookup ) || ( spec._object == lookup && spec._subject == noun ),
+            ( spec._action == lookupField || spec._reverse == lookupField ) || ( spec._action == key || spec._reverse == key ),
+          ]).every(x => !!x)
+        })
+
+        if (!verb) continue
+
+        verb = router.graph[verb]
+
+        // Figure out what side this noun is on
+        const side = verb._object == noun ? 'object' : 'subject'
+
+        console.log(
+          'verb', verb,
+          lookup,
+          lookupField,
+          value[0]
+        )
+
+        console.log(side)
+
+        lookups.push({
+          from: 'resources',
+          as: key,
+          let: { id: `$_id` },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: [ '$_graph', router.graph._id ] },
+                    { $eq: [ '$_noun', 'Action' ] },
+                    { $eq: [ `$_${side}`, '$$id' ] },
+                    { $eq: [ `$_action`, verb._action ] },
+                  ]
+                }
+              }
+            },
+            {
+              $lookup: {
+                from: 'resources',
+                as: 'resource',
+                let: { id: `$_${side == 'object' ? 'subject' : 'object'}` },
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: {
+                        $and: [
+                          { $eq: [ '$_id', '$$id' ] },
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    $limit: 1,
+                  }
+                ]
+              }
+            },
+            // Replace root with the found resource
+            {
+              $unwind: '$resource'
+            },
+            {
+              $replaceRoot: {
+                newRoot: '$resource'
+              }
+            }
+          ]
+        })
+      }
+    }
+  }
+
+  if (lookups.length) {
+    for (const lookup of lookups) {
+      pipeline.push({ $lookup: lookup })
+    }
+  }
+
   const results = await router.client
     .db('db')
     .collection('resources')
     .aggregate(pipeline)
     .toArray()
-
-  const nounSpec = router.graph[noun]
 
   const facetItems = {}
 
@@ -198,7 +315,7 @@ router.get('/:noun', async c => {
   const isExpanded = expand != undefined
 
   for (const result of results) {
-    resultsData[result._name] = processResult(result, noun, isExpanded)
+    resultsData[result._name || result._id] = processResult(result, noun, isExpanded)
   }
 
   const currentQueryParams = new URLSearchParams(c.req.query()).toString()
@@ -302,6 +419,246 @@ router.get('/:noun/:id', async c => {
     responseTime: new Date() - start,
     data: processResult(result, noun, true),
     relationships: referenceData,
+    user: c.user,
+  })
+})
+
+router.get('/:noun/:id/delete', async c => {
+
+})
+
+router.post('/:noun', async c => {
+  // Write a new document to the database
+  const { noun } = c.req.param()
+
+  if (!router.graph[noun]) {
+    return c.json({
+      error: `The noun "${noun}" does not exist in the database.`
+    }, 404)
+  }
+
+  let data = await c.req.json()
+
+  // Perform validation.
+  // If a field has a !, it is required.
+  // If a field is an array and the item inside has a ->, this is a lookup not a reference.
+  // if a field is an array and the first element is capitalized, it is a reference to another noun. An array of IDs basically.
+  // If a field is an array and the first element is lowercase, it is a standard type
+
+  // Demo graph:
+  // SaaS:
+  //   plans: [Plan]
+  //   visitors: [Visitors->visits]
+  //   registrations: [Visitor->registrations]
+  //   logins: [User->logsIn]
+  //   users: [User->uses]
+  //   onboardings: [User->onboards]
+  //   activations: [User->activates]
+  //   subscriptions: [User->subscribes]
+  //   payments: [Customer->payments]
+  //   upgrades: [Customer->upgrades]
+  //   retention: [Customer->retains]
+  //   expansion: [Customer->expands]
+  //   refererrals: [Customer->refers]
+  //   churn: [Customer->cancels]
+  //   reactivations: [Customer->reactivates]
+  //   apiKeys: [User->apiKeys]
+  //   requests: [Request->SaaS]
+  //   errors: [Error->SaaS]
+
+  const graph = router.graph
+
+  const actions = [] // An array of documents to insert / update
+
+  // Our goal is to resolve all references and lookups before we insert the document.
+  // This means we need to know the ID of the document we are referencing.
+
+  // We can do this by first checking if the document exists, and if it does, we can use the ID.
+  // If it doesn't exist, we can insert it and then use the ID.
+
+  const validationErrors = [] 
+
+  const process = (obj) => {
+    const noun = router.graph[obj._noun]
+
+    for (const field of Object.keys(noun)) {
+      const meta = noun[field]
+
+      if (typeof noun[field] == 'string' && noun[field].includes('${')) {
+        obj[field] = noun[field].replace(/\${(.*?)}/g, (match, p1) => obj[p1])
+      }
+
+      if (noun[field] == 'date' || noun[field] == 'createdAt') {
+        obj[field] = new Date(obj[field] || Date.now())
+      }
+
+      if (field.includes('_')) {
+        if (field == '_id') {
+          obj._id = `${obj._graph}/${obj._noun}/${obj[meta]}`
+        } else {
+          // This is always a lookup to another resource.
+          if (meta.includes('$')) {
+            obj[field] = meta.replace(/\${(.*?)}/g, (match, p1) => obj[p1])
+          } else {
+            obj[field] = obj[meta]
+          }
+        }
+      }
+    }
+
+    obj._id = obj._id ? obj._id : `${ router.graph._id }/${ obj._noun }/${ nanoid() }`
+
+    return obj
+  }
+
+  data = process({
+    _graph: router.graph._id,
+    _noun: noun,
+    ...data,
+  })
+
+  // Insert now before we resolve any references.
+  // This allows us to verify the ID is actually free to use.
+  try {
+    await router.client
+      .db('db')
+      .collection('resources')
+      .insertOne({
+        _id: data._id,
+        _pending: true
+      })
+  } catch (e) {
+    return c.json({
+      error: `Object of type ${noun} already exists with ID: ${data._id}`
+    }, 500)
+  }
+
+  const pendingId = data._id
+
+  for (const [key, value] of Object.entries(data)) {
+    if (key === 'id') {
+      // We don't want to allow the user to set the ID of the document.
+      // We will generate a new ID for them.
+      continue
+    }
+
+    if (key.includes('_')) continue
+
+    const field = router.graph[noun][key]
+
+    if (!field) {
+      // The field does not exist in the graph.
+      validationErrors.push(`The field "${key}" does not exist in the graph.`)
+      continue
+    }
+
+    if (field[0] === '!') {
+      // The field is required.
+      if (!value) {
+        validationErrors.push(`The field "${key}" is required.`)
+        continue
+      }
+    }
+
+    if (Array.isArray(value)) {
+      // The field is an array.
+
+      for (const val of value) {
+        if (field[0].includes('->')) {
+          delete data[key]
+
+          // The field is a lookup.
+          // We need to find the document that matches the lookup.
+          const [lookup, lookupField] = field[0].split('->')
+
+          // Find the verb that describes this relationship.
+          let verb = Object.keys(router.graph).find(key => {
+            const spec = router.graph[key]
+
+            return (( spec._object == noun && spec._subject == lookup ) || ( spec._object == lookup && spec._subject == noun )) && spec._action == lookupField
+          })
+
+          if (!verb) {
+            validationErrors.push(
+              `The field "${key}" is a lookup to the field "${lookupField}" on the noun "${lookup}", but no verb exists to describe this relationship.`
+            )
+            continue
+          }
+
+          verb = router.graph[verb]
+
+          let target
+
+          if (typeof val == 'object') {
+            // We need to insert new data into the database.
+            const doc = process(
+              {
+                _graph: router.graph._id,
+                _noun: lookup,
+                ...val
+              }
+            )
+
+            doc._id = doc._id ? doc._id : `${router.graph._id}/${lookup}/${ nanoid() }`
+
+            await router.client.db('db').collection('resources').insertOne(doc)
+
+            target = doc
+
+            console.log('Created', doc)
+          } else {
+            target = await router.client.db('db').collection('resources').findOne({
+              _id: `${router.graph._id}/${lookup}/${value[0]}`,
+            })
+          }
+
+          if (target) {
+            // Create an Action document.
+            // This will bind the two documents together.
+            
+            const subject = verb._subject == noun ? data : target
+            const object = verb._object == noun ? data : target
+
+            await router.client.db('db').collection('resources').insertOne({
+              _graph: router.graph._id,
+              _noun: 'Action',
+              _id: `${router.graph._id}/Action/${ subject._id }/${ verb._action }/${ object._id }`,
+              _subject: subject._id,
+              _object: object._id,
+              _action: verb._action,
+            })
+
+          } else {
+            validationErrors.push(`The lookup on field "${ lookup }.${ lookupField }.${ value[0] }" does not exist. Does this document exist?`)
+            continue
+          }
+        }
+      }
+    }
+  }
+
+  if (validationErrors.length) {
+    await router.client.db('db').collection('resources').deleteOne({
+      _id: pendingId
+    })
+
+    return c.json({
+      error: validationErrors.join(' ')
+    }, 400)
+  }
+
+  await router.client.db('db').collection('resources').updateOne({
+    _id: pendingId
+  }, {
+    $set: {
+      _pending: false,
+      ...data
+    }
+  })
+
+  return c.json({
+    api: c.api,
+    data,
     user: c.user,
   })
 })

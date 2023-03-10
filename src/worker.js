@@ -2,6 +2,8 @@ import { MongoFetchClient } from '@drivly/mongo-fetch'
 
 // Import our routes
 import './read.js'
+import './import.js'
+import './write.js'
 
 // Now we can import the router with our routes preloaded.
 import router from './router.js'
