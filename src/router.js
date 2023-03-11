@@ -10,11 +10,12 @@ router.use('*', async (c, next) => {
   if (req.method == 'OPTIONS') {
     return new Response(null, {
       headers: {
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': req.headers.get('Origin') || req.headers.get('host'),
+        'Access-Control-Allow-Credentials': 'true',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization, Cookie, X-Forwarded-Proto, X-Forwarded-For',
         'Access-Control-Max-Age': 86400,
-      }, 
+      },
     })
   }
 
@@ -34,7 +35,9 @@ router.use('*', async (c, next) => {
     }
   )
 
-  const { user, hostname, rootPath, pathSegments, query } = await env.CTX.fetch(patch).then(res => res.json())
+  const { user, hostname, rootPath, pathSegments, query, body } = await env.CTX.fetch(c.req.raw.clone()).then(res => res.json())
+
+  console.log(user, body)
 
   if (!user) {
     return c.json({
@@ -59,7 +62,8 @@ router.use('*', async (c, next) => {
 
   await next()
 
-  c.res.headers.set('Access-Control-Allow-Origin', '*')
+  c.res.headers.set('Access-Control-Allow-Origin', c.hostname)
+  c.res.headers.set('Access-Control-Allow-Credentials', 'true')
   c.res.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
   c.res.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cookie, X-Forwarded-Proto, X-Forwarded-For')
   c.res.headers.set('Access-Control-Max-Age', 86400)
