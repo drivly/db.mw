@@ -57,6 +57,57 @@ const camelCase = (str) => {
   }).replace(/\s+/g, '')
 }
 
+const unwrap = (ref) => {
+  if (Array.isArray(ref)) {
+    return {
+      isArray: true,
+      ref: ref[0],
+    }
+  } else {
+    return {
+      isArray: false,
+      ref,
+    }
+  }
+}
+
+const resolveRelationship = (graph, noun, parameter) => {
+  // We want to return the data we need to process this parameter.
+
+  // Returning several things:
+  // - The noun we're looking for
+  // - The field we're looking for
+  // - The other side of the relationship if this is a -> relationship
+  // - If the parameter is an array or not
+
+  let otherSide = {}
+  let type = `1:1` // 1:1, 1:n, n:n
+
+  const nouns = Object.keys(graph).filter(key => !key.includes('_'))
+  
+  const { isArray, ref } = unwrap(parameter)
+
+  if (nouns.includes(ref.split('.')[0])) {
+    // A direct reference.
+    const [noun, field] = ref.split('.')
+
+    const targetNoun = graph[noun]
+    const targetField = targetNoun[field]
+
+    if (!targetField) {
+      throw new Error(`Field ${field} does not exist on noun ${noun}`)
+    }
+
+    if (Array.isArray(targetField)) {
+      // This is a 1:n relationship
+      type = `1:n`
+    } else {
+      // This is a 1:1 relationship
+      type = `1:1`
+    }
+  }
+}
+
 router.get('/', async c => {
   // List all nouns we can access.
 
@@ -330,6 +381,7 @@ router.get('/:noun', async c => {
   return c.json({
     api: router.api,
     responseTime: new Date() - start,
+    totalDocuments: count,
     links: {
       self: `https://${c.hostname}/${noun}`,
       next: results.length == limit ? `https://${c.hostname}/${noun}?${withQuery('page', (page || 0) + 1)}` : undefined,
