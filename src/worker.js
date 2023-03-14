@@ -141,6 +141,10 @@ export default {
 
     router.api = api
 
+    router.onError((e, c) => {
+      throw e
+    })
+
     try {
       return await router.fetch(req, env)
     } catch (err) {

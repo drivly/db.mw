@@ -164,6 +164,7 @@ router.get('/graph', async c => {
 })
 
 router.get('/:noun', async c => {
+  throw new Error('fuck')
   const start = new Date()
   const { noun } = c.req.param()
 
