@@ -88,6 +88,15 @@ const resolveReverse = (graph, noun, field) => {
   let canWrite = false
 
   console.log('ref', ref)
+  // If the first character is not upper case, this isnt a reference.
+  if (ref[0] != ref[0].toUpperCase()) {
+    return {
+      isArray,
+      field: null,
+      noun: null,
+      canWrite: true, // This isnt a relationship, so we can write
+    }
+  }
 
   if (ref.includes('->')) {
     const [otherNoun, otherField] = ref.split('->')
