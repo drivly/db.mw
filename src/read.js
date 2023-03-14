@@ -546,6 +546,34 @@ router.get('/:noun/:id', async c => {
 })
 
 router.get('/:noun/:id/delete', async c => {
+  const doc = await router.client
+    .db('db')
+    .collection('resources')
+    .findOne({
+      _id: `${router.graph._id}/${noun}/${id}`,
+    })
+  
+  if (!doc) {
+    return c.json({
+      error: `The document "${id}" does not exist in the database.`,
+    }, 404)
+  }
+
+  await router.client
+    .db('db')
+    .collection('resources')
+    .deleteOne({
+      _id: `${router.graph._id}/${noun}/${id}`,
+    })
+
+  return c.json({
+    api: router.api,
+    data: {
+      deleted: true,
+    },
+    user: c.user,
+  })
+})
 
 })
 
