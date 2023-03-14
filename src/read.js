@@ -71,40 +71,63 @@ const unwrap = (ref) => {
   }
 }
 
-const resolveRelationship = (graph, noun, parameter) => {
-  // We want to return the data we need to process this parameter.
+const resolveReverse = (graph, noun, field) => {
+  // Given an example of:
+  // Noun1: 
+  //  field1: Noun2.field2
+  // Noun2:
+  //  field2: [Noun1->field1]
+  // We need to return if the field is an array or not, and the field name
+  // And the otherside of the relationship and the type of relationship
+  // If our side is -> and the other side is also ->, this is a many to many relationship
+  // If our side is . and the other side is ->, this is a one to many relationship. Meaning we can write on our end but not the other.
+  // If our side is -> and the other side is ., this is a many to one relationship. Meaning we can write on the other end but not ours.
+  // If our side is . and the other side is ., this is an illegal relationship as dot references need to be pointing to a single object, not each other.
 
-  // Returning several things:
-  // - The noun we're looking for
-  // - The field we're looking for
-  // - The other side of the relationship if this is a -> relationship
-  // - If the parameter is an array or not
+  const { ref, isArray } = unwrap(graph[noun][field])
+  let canWrite = false
 
-  let otherSide = {}
-  let type = `1:1` // 1:1, 1:n, n:n
+  console.log('ref', ref)
 
-  const nouns = Object.keys(graph).filter(key => !key.includes('_'))
-  
-  const { isArray, ref } = unwrap(parameter)
+  if (ref.includes('->')) {
+    const [otherNoun, otherField] = ref.split('->')
 
-  if (nouns.includes(ref.split('.')[0])) {
-    // A direct reference.
-    const [noun, field] = ref.split('.')
+    const otherNounSpec = graph[otherNoun]
 
-    const targetNoun = graph[noun]
-    const targetField = targetNoun[field]
-
-    if (!targetField) {
-      throw new Error(`Field ${field} does not exist on noun ${noun}`)
+    if (otherNounSpec[otherField].includes('->')) {
+      canWrite = true
     }
 
-    if (Array.isArray(targetField)) {
-      // This is a 1:n relationship
-      type = `1:n`
-    } else {
-      // This is a 1:1 relationship
-      type = `1:1`
+    return {
+      isArray,
+      field: otherField,
+      noun: otherNoun,
+      canWrite,
     }
+  }
+
+  if (ref.includes('.')) {
+    const [otherNoun, otherField] = ref.split('.')
+
+    const otherNounSpec = graph[otherNoun]
+
+    if (!otherNounSpec[otherField].includes('.')) {
+      canWrite = true
+    }
+
+    return {
+      isArray,
+      field: otherField,
+      noun: otherNoun,
+      canWrite,
+    }
+  }
+
+  return {
+    isArray: false,
+    field: null,
+    noun: null,
+    canWrite: true, // This isnt a relationship, so we can write
   }
 }
 
@@ -154,6 +177,13 @@ router.get('/:noun', async c => {
 
   let skip = page ? (page - 1) * pageSize : 0
   let limit = pageSize
+
+  // Process the filter param, turning props like _id=one,two,three into an $in query
+  for (const key in filter) {
+    if (filter[key].includes(',')) {
+      filter[key] = { $in: filter[key].split(',').map(item => item.trim()).map(item => `${router.graph._id}/${noun}/${item}`) }
+    }
+  }
 
   const pipeline = [
     {
@@ -604,10 +634,29 @@ router.post('/:noun', async c => {
       continue
     }
 
-    if (field[0] === '!') {
-      // The field is required.
-      if (!value) {
-        validationErrors.push(`The field "${key}" is required.`)
+    const { ref, isArray } = unwrap(field)
+    const resolved = resolveReverse(router.graph, noun, key)
+
+    if (ref.includes('.')) {
+      // The field is a reference.
+      // We need to find the document that matches the reference.
+      if (!resolved.canWrite) {
+        validationErrors.push(`The field "${key}" is a reference to the field "${ref}", but the field "${ref}" is not writable.`)
+        continue
+      }
+
+      // See if the document that is being referenced exists.
+      const [lookup, lookupField] = ref.split('.')
+
+      const lookupDoc = await router.client
+        .db('db')
+        .collection('resources')
+        .findOne({
+          _id: `${router.graph._id}/${lookup}/${data[key]}`
+        })
+
+      if (!lookupDoc) {
+        validationErrors.push(`The field "${key}" is a reference to the field "${ref}", but the document "${data[key]}" does not exist.`)
         continue
       }
     }
@@ -616,12 +665,12 @@ router.post('/:noun', async c => {
       // The field is an array.
 
       for (const val of value) {
-        if (field[0].includes('->')) {
+        if (ref.includes('->')) {
           delete data[key]
 
           // The field is a lookup.
           // We need to find the document that matches the lookup.
-          const [lookup, lookupField] = field[0].split('->')
+          const [lookup, lookupField] = ref.split('->')
 
           // Find the verb that describes this relationship.
           let verb = Object.keys(router.graph).find(key => {
@@ -695,7 +744,7 @@ router.post('/:noun', async c => {
     })
 
     return c.json({
-      error: validationErrors.join(' ')
+      errors: validationErrors
     }, 400)
   }
 
