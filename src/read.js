@@ -574,8 +574,6 @@ router.get('/:noun/:id/delete', async c => {
   })
 })
 
-})
-
 router.post('/:noun', async c => {
   // Write a new document to the database
   const { noun } = c.req.param()
