@@ -87,7 +87,6 @@ const resolveReverse = (graph, noun, field) => {
   const { ref, isArray } = unwrap(graph[noun][field])
   let canWrite = false
 
-  console.log('ref', ref)
   // If the first character is not upper case, this isnt a reference.
   if (ref[0] != ref[0].toUpperCase()) {
     return {
@@ -686,19 +685,21 @@ router.post('/:noun', async c => {
         continue
       }
 
-      // See if the document that is being referenced exists.
-      const [lookup, lookupField] = ref.split('.')
+      if (resolved.field) {
+        // See if the document that is being referenced exists.
+        const [lookup, lookupField] = ref.split('.')
 
-      const lookupDoc = await router.client
-        .db('db')
-        .collection('resources')
-        .findOne({
-          _id: `${router.graph._id}/${lookup}/${data[key]}`
-        })
+        const lookupDoc = await router.client
+          .db('db')
+          .collection('resources')
+          .findOne({
+            _id: `${router.graph._id}/${lookup}/${data[key]}`
+          })
 
-      if (!lookupDoc) {
-        validationErrors.push(`The field "${key}" is a reference to the field "${ref}", but the document "${data[key]}" does not exist.`)
-        continue
+        if (!lookupDoc) {
+          validationErrors.push(`The field "${key}" is a reference to the field "${ref}", but the document "${data[key]}" does not exist.`)
+          continue
+        }
       }
     }
 
