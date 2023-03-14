@@ -141,7 +141,12 @@ export default {
 
     router.api = api
 
-    return await router.fetch(req, env)
+    try {
+      return await router.fetch(req, env)
+    } catch (err) {
+      console.error(err)
+      return json({ error: err.message, stack: err.stack }, 500)
+    }
   }
 }
 

@@ -7,7 +7,7 @@ const processResult = (obj, noun, isExpanded) => {
   // We need to make all fields with underlines at the top of the object
   // so that they can be accessed by the client
   if (!isExpanded) {
-    return `https://${hostname}/${noun}/${obj._id.replace(`${obj._graph}/${obj._noun}/`, '')}`
+    return `https://${hostname}/${noun}/${encodeURIComponent(obj._id.replace(`${obj._graph}/${obj._noun}/`, ''))}`
   }
 
   const result = {}
@@ -17,7 +17,7 @@ const processResult = (obj, noun, isExpanded) => {
 
       if (key == '_id') {
         // Turn into a clickable URL
-        result[key] = `https://${hostname}/${noun}/${obj[key].replace(`${obj._graph}/${obj._noun}/`, '')}`
+        result[key] = `https://${hostname}/${noun}/${encodeURIComponent(obj[key].replace(`${obj._graph}/${obj._noun}/`, ''))}`
       } else {
         result[key] = obj[key]
       }
@@ -183,6 +183,18 @@ router.get('/:noun', async c => {
     if (filter[key].includes(',')) {
       filter[key] = { $in: filter[key].split(',').map(item => item.trim()).map(item => `${router.graph._id}/${noun}/${item}`) }
     }
+
+    if (key == 'of') {
+      filter.of = `${router.graph._id}/${filter.of}`
+    }
+  }
+
+  let isVerb = false
+  const nounSpec = router.graph[noun]
+
+  if (nounSpec._action) {
+    // This is a verb
+    isVerb = true
   }
 
   const pipeline = [
@@ -194,6 +206,8 @@ router.get('/:noun', async c => {
       }
     }
   ]
+
+  console.log(pipeline)
 
   if (expand === undefined) {
     pipeline.push({
@@ -224,8 +238,6 @@ router.get('/:noun', async c => {
     pipeline.push({ $limit: 100 })
   }
 
-  const nounSpec = router.graph[noun]
-
   // Process the spec and find lookups
   const lookups = []
 
@@ -247,6 +259,8 @@ router.get('/:noun', async c => {
             ( spec._action == lookupField || spec._reverse == lookupField ) || ( spec._action == key || spec._reverse == key ),
           ]).every(x => !!x)
         })
+
+        const verbName = verb
 
         if (!verb) continue
 
@@ -274,7 +288,7 @@ router.get('/:noun', async c => {
                 $expr: {
                   $and: [
                     { $eq: [ '$_graph', router.graph._id ] },
-                    { $eq: [ '$_noun', 'Action' ] },
+                    { $eq: [ '$_noun', verbName ] },
                     { $eq: [ `$_${side}`, '$$id' ] },
                     { $eq: [ `$_action`, verb._action ] },
                   ]
@@ -396,7 +410,7 @@ router.get('/:noun', async c => {
   const isExpanded = expand != undefined
 
   for (const result of results) {
-    resultsData[result._name || result._id] = processResult(result, noun, isExpanded)
+    resultsData[(result._name || result._id).replaceAll(router.graph._id + '/', '')] = processResult(result, noun, isExpanded)
   }
 
   const currentQueryParams = new URLSearchParams(c.req.query()).toString()
@@ -427,7 +441,9 @@ router.get('/:noun', async c => {
 
 router.get('/:noun/:id', async c => {
   const start = new Date()
-  const { noun, id } = c.req.param()
+  let { noun, id } = c.req.param()
+
+  id = decodeURIComponent(id)
 
   const result = await router.client
     .db('db')
@@ -435,6 +451,8 @@ router.get('/:noun/:id', async c => {
     .findOne({
       _id: `${router.graph._id}/${noun}/${id}`,
     })
+
+  console.log(result, noun, id)
 
   const references = []
 
@@ -463,14 +481,24 @@ router.get('/:noun/:id', async c => {
       _id = parseInt(id)
     } catch (e) {}
 
+    const query = {
+      _graph: router.graph._id,
+      _noun: reference.noun
+    }
+
+    const refNoun = router.graph[reference.noun]
+
+    if (refNoun._action) {
+      // This is a verb we are referencing.
+      query.of = result._id
+    } else {
+      query[reference.field] = _id
+    }
+
     const results = await router.client
       .db('db')
       .collection('resources')
-      .find({
-        _graph: router.graph._id,
-        _noun: reference.noun,
-        [reference.field]: _id,
-      })
+      .find(query)
       .project({
         _id: 1,
         _name: 1,
@@ -499,6 +527,9 @@ router.get('/:noun/:id', async c => {
     id: parsedId,
     name: result._name,
     responseTime: new Date() - start,
+    links: {
+      delete: `https://${c.hostname}/${noun}/${id}/delete`,
+    },
     data: processResult(result, noun, true),
     relationships: referenceData,
     user: c.user,
@@ -679,6 +710,8 @@ router.post('/:noun', async c => {
             return (( spec._object == noun && spec._subject == lookup ) || ( spec._object == lookup && spec._subject == noun )) && spec._action == lookupField
           })
 
+          const verbName = verb
+
           if (!verb) {
             validationErrors.push(
               `The field "${key}" is a lookup to the field "${lookupField}" on the noun "${lookup}", but no verb exists to describe this relationship.`
@@ -722,11 +755,16 @@ router.post('/:noun', async c => {
 
             await router.client.db('db').collection('resources').insertOne({
               _graph: router.graph._id,
-              _noun: 'Action',
-              _id: `${router.graph._id}/Action/${ subject._id }/${ verb._action }/${ object._id }`,
+              _noun: verbName,
+              _id: `${router.graph._id}/${verbName}/${ subject._id }/${ verb._action }/${ object._id }`,
+              _name: `${ subject._name || subject._id } ${ verb._action } ${ object._name || object._id }`,
               _subject: subject._id,
               _object: object._id,
               _action: verb._action,
+              of: [
+                subject._id,
+                object._id
+              ] // For searching later.
             })
 
           } else {
@@ -762,4 +800,18 @@ router.post('/:noun', async c => {
     data,
     user: c.user,
   })
+})
+
+// Update a document.
+
+router.put('/:noun/:id', async (c) => {
+  const { noun, id } = c.param()
+  let data = await c.req.json()
+
+  const validationErrors = []
+
+  const toChange = {}
+
+  for (const [key, value] of Object.entries(data)) {
+  }
 })
