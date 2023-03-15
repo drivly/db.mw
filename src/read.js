@@ -1,7 +1,7 @@
 // Read operations for the database
 
 import router from './router.js'
-import { nanoid } from './utils.js'
+import { nanoid, md5 } from './utils.js'
 
 const processResult = (obj, noun, isExpanded) => {
   // We need to make all fields with underlines at the top of the object
@@ -9,6 +9,8 @@ const processResult = (obj, noun, isExpanded) => {
   if (!isExpanded) {
     return `https://${hostname}/${noun}/${encodeURIComponent(obj._id.replace(`${obj._graph}/${obj._noun}/`, ''))}`
   }
+
+  const nounSpec = router.graph[noun]
 
   const result = {}
 
@@ -26,7 +28,30 @@ const processResult = (obj, noun, isExpanded) => {
 
   for (const key in obj) {
     if (!key.startsWith('_')) {
-      result[key] = obj[key]
+
+      const { ref, isArray } = unwrap(nounSpec[key])
+
+      if (ref) {
+        if (ref.includes('.')) {
+          const targetNoun = ref.split('.')[0]
+          if (isArray) {
+            result[key] = obj[key].map(item => `https://${hostname}/${targetNoun}/${encodeURIComponent(item.replace(`${obj._graph}/${targetNoun}/`, ''))}`)
+          } else {
+            result[key] = `https://${hostname}/${targetNoun}/${encodeURIComponent(obj[key].replace(`${obj._graph}/${targetNoun}/`, ''))}`
+          }
+        } else if (ref.includes('->')) {
+          const targetNoun = ref.split('->')[0]
+          if (isArray) {
+            result[key] = obj[key].map(item => `https://${hostname}/${targetNoun}/${encodeURIComponent(item.replace(`${obj._graph}/${targetNoun}/`, ''))}`)
+          } else {
+            result[key] = `https://${hostname}/${targetNoun}/${encodeURIComponent(obj[key].replace(`${obj._graph}/${targetNoun}/`, ''))}`
+          }
+        } else {
+          result[key] = obj[key]
+        }
+      } else {
+        result[key] = obj[key]
+      }
     }
   }
 
@@ -545,6 +570,40 @@ router.get('/:noun/:id', async c => {
 })
 
 router.get('/:noun/:id/delete', async c => {
+  const { noun, id } = c.req.param()
+  const { idempotencyKey } = c.req.query()
+
+  if (!idempotencyKey) {
+    return c.json({
+      api: router.api,
+      data: {
+        error: 'You must provide an MD5 hash to delete a document.',
+        code: 'idempotencyKeyRequired',
+        messages: [
+          'This is to prevent accidental deletion of documents.',
+          'We have generated a hash for you to use below if you are using this interface via a browser.',
+        ],
+        idempotentDelete: `https://${c.hostname}/${noun}/${id}/delete?idempotencyKey=${md5(`${noun}/${id}`)}`
+      },
+      user: c.user,
+    }, 400)
+  }
+
+  if (idempotencyKey != md5(`${noun}/${id}`)) {
+    return c.json({
+      api: router.api,
+      data: {
+        error: 'The idempotency key you provided does not match the has required for this destructive operation',
+        code: 'idempotencyKeyInvalid',
+        messages: [
+          'The idempotency key is an MD5 hash using the following template:',
+          '`${noun}/${id}`',
+        ]
+      },
+      user: c.user,
+    }, 400)
+  }
+
   const doc = await router.client
     .db('db')
     .collection('resources')
@@ -710,7 +769,7 @@ router.post('/:noun', async c => {
         continue
       }
 
-      if (resolved.field) {
+      if (resolved.field && !resolved.isArray) {
         // See if the document that is being referenced exists.
         const [lookup, lookupField] = ref.split('.')
 
@@ -724,6 +783,23 @@ router.post('/:noun', async c => {
         if (!lookupDoc) {
           validationErrors.push(`The field "${key}" is a reference to the field "${ref}", but the document "${data[key]}" does not exist.`)
           continue
+        }
+      } else if (resolved.field && resolved.isArray) {
+        const [lookup, lookupField] = ref.split('.')
+
+        for (const val of value) {
+          console.log(`${router.graph._id}/${lookup}/${val}`)
+          const lookupDoc = await router.client
+            .db('db')
+            .collection('resources')
+            .findOne({
+              _id: `${router.graph._id}/${lookup}/${val}`
+            })
+
+          if (!lookupDoc) {
+            validationErrors.push(`The field "${key}" is a reference to the field "${ref}", but the document "${val}" does not exist. Index ${value.indexOf(val)} of the provided array.`)
+            continue
+          }
         }
       }
     }
@@ -840,8 +916,8 @@ router.post('/:noun', async c => {
 
 // Update a document.
 
-router.put('/:noun/:id', async (c) => {
-  const { noun, id } = c.param()
+router.patch('/:noun/:id', async (c) => {
+  const { noun, id } = c.req.param()
   let data = await c.req.json()
 
   const validationErrors = []
@@ -849,5 +925,90 @@ router.put('/:noun/:id', async (c) => {
   const toChange = {}
 
   for (const [key, value] of Object.entries(data)) {
+    // Resolve the relationship. if this is a many-to-many relationship, abort the request.
+    const resolved = resolveReverse(router.graph, noun, key)
+    const { field, fieldIsArray } = unwrap(router.graph[noun][key])
+
+    if (resolved.field && !resolved.canWrite) {
+      validationErrors.push(`The field "${key}" is a reference to the field "${resolved.field}", but the field "${resolved.field}" is not writable.`)
+      continue
+    }
+
+    // Now we can cheat a little bit.
+    // We need to remove potential references to URLs.
+    // So if someone sends in `asgard.ceru.dev/SaaS/1234`, we need to remove the `asgard.ceru.dev/SaaS/` part.
+    // The cheat is that we can JSONify the string and remove it. This method allows us to support both arrays and strings in a single go.
+
+    toChange[key] = JSON.parse(
+      JSON.stringify(
+        value
+      ).replaceAll(
+        `${router.graph._id}/${resolved.noun}/`,
+        ''
+      )
+    )
+
+    // Now we need to validate the data.
+    // If the field is a reference, we need to make sure that the document exists.
+
+    console.log(field)
+
+    if (field[0] === field[0].toUpperCase()) {
+      if (field.includes('.') && !fieldIsArray) {
+        // This is a dot reference. Check to see if the document exists.
+        const [lookup, lookupField] = field.split('.')
+  
+        const lookupDoc = await router.client
+          .db('db')
+          .collection('resources')
+          .findOne({
+            _id: `${router.graph._id}/${lookup}/${value}`
+          })
+  
+        if (!lookupDoc) {
+          validationErrors.push(`The field "${key}" is a reference to the field "${field}", but the document "${value}" does not exist.`)
+          continue
+        }
+      } else if (field.includes('.') && fieldIsArray) {
+        if (!Array.isArray(value)) {
+          validationErrors.push(`The field "${key}" is a reference to the field "${field}" and expects an Array, but the value "${value}" is not an Array.`)
+        }
+
+        const [lookup, lookupField] = field.split('.')
+
+        for (const val of value) {
+          const lookupDoc = await router.client
+            .db('db')
+            .collection('resources')
+            .findOne({
+              _id: `${router.graph._id}/${lookup}/${val}`
+            })
+    
+          if (!lookupDoc) {
+            validationErrors.push(`The field "${key}" is a reference to the field "${field}", but the document "${val}" does not exist.`)
+            continue
+          }
+        }
+      }
+    }
   }
+
+  if (validationErrors.length) {
+    return c.json({
+      api: c.api,
+      errors: validationErrors
+    }, 400)
+  }
+
+  await router.client.db('db').collection('resources').updateOne({
+    _id: `${router.graph._id}/${noun}/${id}`
+  }, {
+    $set: toChange
+  })
+
+  return c.json({
+    api: c.api,
+    data,
+    user: c.user,
+  })
 })
