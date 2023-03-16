@@ -7,7 +7,7 @@ const processResult = (obj, noun, isExpanded) => {
   // We need to make all fields with underlines at the top of the object
   // so that they can be accessed by the client
   if (!isExpanded) {
-    return `https://${hostname}/${noun}/${encodeURIComponent(obj._id.replace(`${obj._graph}/${obj._noun}/`, ''))}`
+    return `https://${hostname}/${noun}/${(obj._id.replace(`${obj._graph}/${obj._noun}/`, ''))}`
   }
 
   const nounSpec = router.graph[noun]
@@ -16,10 +16,11 @@ const processResult = (obj, noun, isExpanded) => {
 
   for (const key in obj) {
     if (key.startsWith('_')) {
-
       if (key == '_id') {
         // Turn into a clickable URL
-        result[key] = `https://${hostname}/${noun}/${encodeURIComponent(obj[key].replace(`${obj._graph}/${obj._noun}/`, ''))}`
+        result[key] = `https://${hostname}/${noun}/${(obj[key].replace(`${obj._graph}/${obj._noun}/`, ''))}`
+      } else if (key == '_object' || key == '_subject') {
+        result[key] = `https://${obj[key]}`
       } else {
         result[key] = obj[key]
       }
@@ -35,16 +36,16 @@ const processResult = (obj, noun, isExpanded) => {
         if (ref.includes('.')) {
           const targetNoun = ref.split('.')[0]
           if (isArray) {
-            result[key] = obj[key].map(item => `https://${hostname}/${targetNoun}/${encodeURIComponent(item.replace(`${obj._graph}/${targetNoun}/`, ''))}`)
+            result[key] = obj[key].map(item => `https://${hostname}/${targetNoun}/${(item.replace(`${obj._graph}/${targetNoun}/`, ''))}`)
           } else {
-            result[key] = `https://${hostname}/${targetNoun}/${encodeURIComponent(obj[key].replace(`${obj._graph}/${targetNoun}/`, ''))}`
+            result[key] = `https://${hostname}/${targetNoun}/${(obj[key].replace(`${obj._graph}/${targetNoun}/`, ''))}`
           }
         } else if (ref.includes('->')) {
           const targetNoun = ref.split('->')[0]
           if (isArray) {
-            result[key] = obj[key].map(item => `https://${hostname}/${targetNoun}/${encodeURIComponent(item.replace(`${obj._graph}/${targetNoun}/`, ''))}`)
+            result[key] = obj[key].map(item => `https://${hostname}/${targetNoun}/${(item.replace(`${obj._graph}/${targetNoun}/`, ''))}`)
           } else {
-            result[key] = `https://${hostname}/${targetNoun}/${encodeURIComponent(obj[key].replace(`${obj._graph}/${targetNoun}/`, ''))}`
+            result[key] = `https://${hostname}/${targetNoun}/${(obj[key].replace(`${obj._graph}/${targetNoun}/`, ''))}`
           }
         } else {
           result[key] = obj[key]
@@ -203,13 +204,15 @@ router.get('/:noun', async c => {
   let {
     page,
     pageSize,
+    limit,
+    skip,
     expand,
     debug,
     ...filter
   } = Object.fromEntries(new URLSearchParams(c.req.raw.url.split('?')[1] || ''))
 
-  let skip = page ? (page - 1) * pageSize : 0
-  let limit = pageSize
+  skip = skip || (page ? (page - 1) * pageSize : 0)
+  limit = limit || pageSize
 
   // Process the filter param, turning props like _id=one,two,three into an $in query
   for (const key in filter) {
@@ -419,7 +422,7 @@ router.get('/:noun', async c => {
             result[key] = {}
           }
 
-          result[key][`${item._id} (${item.count})`] = `https://${c.hostname}/${encodeURIComponent(noun)}?${camelCase(key)}=${encodeURIComponent(item._id).replace('%20', '+')}`
+          result[key][`${item._id} (${item.count})`] = `https://${c.hostname}/${(noun)}?${camelCase(key)}=${(item._id).replace('%20', '+')}`
         }
       }
     }
@@ -472,11 +475,77 @@ router.get('/:noun', async c => {
   })
 })
 
-router.get('/:noun/:id', async c => {
-  const start = new Date()
-  let { noun, id } = c.req.param()
+router.get('/:noun/delete/:target{.*}', async c => {
+  let { noun, target } = c.req.param()
+  let id = target
+  console.log(c.req.param())
+  const { idempotencyKey } = c.req.query()
 
-  id = decodeURIComponent(id)
+  if (!idempotencyKey) {
+    return c.json({
+      api: router.api,
+      data: {
+        error: 'You must provide an MD5 hash to delete a document.',
+        code: 'idempotencyKeyRequired',
+        messages: [
+          'This is to prevent accidental deletion of documents.',
+          'We have generated a hash for you to use below if you are using this interface via a browser.',
+        ],
+        idempotentDelete: `https://${c.hostname}/${noun}/${ (id) }/delete?idempotencyKey=${md5(`${noun}/${id}`)}`
+      },
+      user: c.user,
+    }, 400)
+  }
+
+  if (idempotencyKey != md5(`${noun}/${id}`)) {
+    return c.json({
+      api: router.api,
+      data: {
+        error: 'The idempotency key you provided does not match the has required for this destructive operation',
+        code: 'idempotencyKeyInvalid',
+        messages: [
+          'The idempotency key is an MD5 hash using the following template:',
+          '`${noun}/${id}`',
+        ]
+      },
+      user: c.user,
+    }, 400)
+  }
+
+  const doc = await router.client
+    .db('db')
+    .collection('resources')
+    .findOne({
+      _id: `${router.graph._id}/${noun}/${id}`,
+    })
+  
+  if (!doc) {
+    return c.json({
+      error: `The document "${id}" does not exist in the database.`,
+    }, 404)
+  }
+
+  await router.client
+    .db('db')
+    .collection('resources')
+    .deleteOne({
+      _id: `${router.graph._id}/${noun}/${id}`,
+    })
+
+  return c.json({
+    api: router.api,
+    data: {
+      deleted: true,
+    },
+    user: c.user,
+  })
+})
+
+router.get('/:noun/:target{.*}', async c => {
+  const start = new Date()
+  let { noun, target } = c.req.param()
+
+  let id = decodeURIComponent(target)
 
   const result = await router.client
     .db('db')
@@ -561,74 +630,10 @@ router.get('/:noun/:id', async c => {
     name: result._name,
     responseTime: new Date() - start,
     links: {
-      delete: `https://${c.hostname}/${noun}/${id}/delete`,
+      delete: `https://${c.hostname}/${noun}/delete/${ id }`,
     },
     data: processResult(result, noun, true),
     relationships: referenceData,
-    user: c.user,
-  })
-})
-
-router.get('/:noun/:id/delete', async c => {
-  const { noun, id } = c.req.param()
-  const { idempotencyKey } = c.req.query()
-
-  if (!idempotencyKey) {
-    return c.json({
-      api: router.api,
-      data: {
-        error: 'You must provide an MD5 hash to delete a document.',
-        code: 'idempotencyKeyRequired',
-        messages: [
-          'This is to prevent accidental deletion of documents.',
-          'We have generated a hash for you to use below if you are using this interface via a browser.',
-        ],
-        idempotentDelete: `https://${c.hostname}/${noun}/${id}/delete?idempotencyKey=${md5(`${noun}/${id}`)}`
-      },
-      user: c.user,
-    }, 400)
-  }
-
-  if (idempotencyKey != md5(`${noun}/${id}`)) {
-    return c.json({
-      api: router.api,
-      data: {
-        error: 'The idempotency key you provided does not match the has required for this destructive operation',
-        code: 'idempotencyKeyInvalid',
-        messages: [
-          'The idempotency key is an MD5 hash using the following template:',
-          '`${noun}/${id}`',
-        ]
-      },
-      user: c.user,
-    }, 400)
-  }
-
-  const doc = await router.client
-    .db('db')
-    .collection('resources')
-    .findOne({
-      _id: `${router.graph._id}/${noun}/${id}`,
-    })
-  
-  if (!doc) {
-    return c.json({
-      error: `The document "${id}" does not exist in the database.`,
-    }, 404)
-  }
-
-  await router.client
-    .db('db')
-    .collection('resources')
-    .deleteOne({
-      _id: `${router.graph._id}/${noun}/${id}`,
-    })
-
-  return c.json({
-    api: router.api,
-    data: {
-      deleted: true,
-    },
     user: c.user,
   })
 })
@@ -644,6 +649,97 @@ router.post('/:noun', async c => {
   }
 
   let data = await c.req.json()
+
+  // If this is a verb, we need to do different things.
+  // Such as lookup both objects, check if they exist, and then create a new document with the verb as the noun.
+
+  if (router.graph[noun]._action) {
+    let { object, subject } = data
+
+    if (!object || !subject) {
+      return c.json({
+        error: 'You must provide both an object and a subject to create a new verb.',
+      }, 400)
+    }
+
+    const verb = router.graph[noun]
+    const verbName = noun
+
+    if (!object.includes(verb._object) || !object.includes(router.graph._id)) {
+      // This is a malformed ID and does not include the noun reference. We need to add it.
+      object = `${router.graph._id}/${verb._object}/${ object.replaceAll(verb._object + '/', '') }`
+    }
+
+    if (!subject.includes(verb._subject) || !subject.includes(router.graph._id)) {
+      // Same as above.
+      subject = `${router.graph._id}/${verb._subject}/${ subject.replaceAll(verb._subject + '/', '') }`
+    }
+
+    const objectDoc = await router.client
+      .db('db')
+      .collection('resources')
+      .findOne({
+        _id: object,
+      })
+
+    const subjectDoc = await router.client
+      .db('db')
+      .collection('resources')
+      .findOne({
+        _id: subject,
+      })
+
+    if (!objectDoc) {
+      return c.json({
+        errors: [
+          `The object "${object}" does not exist in the database.`,
+        ],
+      }, 400)
+    }
+
+    if (!subjectDoc) {
+      return c.json({
+        errors: [
+          `The subject "${subject}" does not exist in the database.`,
+        ],
+      }, 400)
+    }
+
+    const toInsert = {
+      _id: `${router.graph._id}/${verbName}/${ subject }/${ verb._action }/${ object }`,
+      _graph: router.graph._id,
+      _noun: verbName,
+      _name: `${ subjectDoc._name || subjectDoc._id } ${ verb._action } ${ objectDoc._name || objectDoc._id }`,
+      _subject: subject,
+      _object: object,
+      _action: verb._action,
+      of: [
+        subject,
+        object
+      ] // For searching later.
+    }
+
+    try {
+      const result = await router.client
+      .db('db')
+      .collection('resources')
+      .insertOne(toInsert)
+    } catch (e) {
+      return c.json({
+        errors: [
+          `The verb "${toInsert._id}" already exists in the database.`,
+        ]
+      }, 400)
+    }
+
+    return c.json({
+      api: router.api,
+      data: {
+        inserted: true,
+      },
+      user: c.user,
+    })
+  }
 
   // Perform validation.
   // If a field has a !, it is required.
@@ -1009,6 +1105,34 @@ router.patch('/:noun/:id', async (c) => {
   return c.json({
     api: c.api,
     data,
+    user: c.user,
+  })
+})
+
+router.delete('/:noun/:id', async c => {
+  const { noun, id } = c.req.param()
+
+  const doc = await router.client.db('db').collection('resources').findOne({
+    _id: `${router.graph._id}/${noun}/${id}`
+  })
+
+  if (!doc) {
+    return c.json({
+      api: c.api,
+      errors: [`The document "${id}" does not exist.`],
+      user: c.user,
+    }, 404)
+  }
+
+  await router.client.db('db').collection('resources').deleteOne({
+    _id: `${router.graph._id}/${noun}/${id}`
+  })
+
+  return c.json({
+    api: c.api,
+    data: {
+      deleted: true,
+    },
     user: c.user,
   })
 })
