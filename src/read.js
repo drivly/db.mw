@@ -519,7 +519,7 @@ router.get('/:noun', async c => {
     links: {
       self: `https://${c.hostname}/${noun}`,
       next: results.length == limit ? `https://${c.hostname}/${noun}?${withQuery('page', (page || 0) + 1)}` : undefined,
-      first: `https://${c.hostname}/${noun}?${withQuery('page', 0)}`,
+      first: `https://${c.hostname}/${noun}?${withQuery('page', 1)}`,
       last: results.length == limit ? `https://${c.hostname}/${noun}?${withQuery('page', parseInt(count / pageSize))}` : `https://${c.hostname}/${noun}?${withQuery('page', 1)}`, 
       expandedResults: `https://${c.hostname}/${noun}?${withQuery('expand', '')}`,
     },
