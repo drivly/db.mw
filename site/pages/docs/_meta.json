@@ -1,0 +1,9 @@
+{
+  "index": "Introduction",
+  "docs": {
+    "title": "Documentation",
+    "type": "page"
+  },
+  "api": "API",
+  "sdk": "SDK"
+}

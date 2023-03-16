@@ -5,6 +5,7 @@ import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 const navigation = [
   { name: 'Features', href: '#features' },
   { name: 'Pricing', href: '#pricing' },
+  { name: 'FAQs', href: '#faq' },
   { name: 'API & SDK', href: '/docs/api' },
   { name: 'Documentation', href: '/docs' },
   // { name: 'Dashboard', href: '#' },
@@ -17,9 +18,9 @@ export default function Header() {
     <header className='bg-gray-900'>
       <nav className='mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8' aria-label='Global'>
         <div className='flex lg:flex-1'>
-          <a href='#' className='-m-1.5 p-1.5'>
+          <a href='/' className='-m-1.5 p-1.5'>
             <div className='h-8 w-auto text-white text-2xl font-black'>
-            <span className='text-pink-500'>彡</span> DB<span className='font-thin text-white'>.MW</span>
+              <span className='text-pink-500'>彡</span> DB<span className='font-thin text-white'>.MW</span>
             </div>
           </a>
         </div>
