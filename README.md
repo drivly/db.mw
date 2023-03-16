@@ -57,6 +57,38 @@ The backend data storage and query capabilities are supported through a variety 
 }
 ```
 
+### Usage
+
+Here are the current supported operations:
+- List
+- Insert
+- Update
+
+### Managing a many-to-many relationship
+
+To manage a many-to-many relationship, you can use the same system as for creating and modifying resources via the Nouns, however you will need to provide special parameters. For example:
+
+```http
+POST /Developer
+
+{
+  "subject": "User/1",
+  "object": "SaaS/2"
+}
+```
+
+As a note, you can even use abbreviated IDs for the subject and object. Such as `1` and `2` for the above example.
+
+You can delete a many-to-many relationship by sending a DELETE request to the Noun:
+
+```http
+DELETE /Developer/:id
+```
+
+It should be noted that if the ID includes slashes (`/`), it must be URL encoded.
+
+```yaml
+
 List all available databases 
 
 https://db.mw
