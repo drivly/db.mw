@@ -197,6 +197,60 @@ router.get('/graph', async c => {
   })
 })
 
+router.get('/search', async c => {
+  const {
+    q,
+    term,
+    ...filter
+  } = c.req.query()
+
+  const pipeline = [
+    {
+      $search: {
+        index: 'default',
+        text: {
+          query: q || term,
+          path: {
+            wildcard: '*'
+          }
+        }
+      }
+    },
+    {
+        $match: {
+          _graph: router.graph._id,
+          ...filter
+        }
+    },
+    {
+      $addFields: {
+        score: {
+          $meta: 'searchScore'
+        }
+      }
+    },
+    {
+      $sort: {
+        score: -1
+      }
+    }
+  ]
+
+  const search = await router.client
+    .db('db')
+    .collection('resources')
+    .aggregate(pipeline)
+    .toArray()
+
+  console.log(search)
+
+  return c.json({
+    api: router.api,
+    data: search.map(item => processResult(item, item._noun, true)),
+    user: c.user,
+  })
+})
+
 router.get('/:noun', async c => {
   const start = new Date()
   const { noun } = c.req.param()
@@ -475,9 +529,9 @@ router.get('/:noun', async c => {
   })
 })
 
-router.get('/:noun/delete/:target{.*}', async c => {
-  let { noun, target } = c.req.param()
-  let id = target
+router.get('/:noun/delete/:deleteTarget{.*}', async c => {
+  let { noun, deleteTarget } = c.req.param()
+  let id = deleteTarget
   console.log(c.req.param())
   const { idempotencyKey } = c.req.query()
 
@@ -541,11 +595,11 @@ router.get('/:noun/delete/:target{.*}', async c => {
   })
 })
 
-router.get('/:noun/:target{.*}', async c => {
+router.get('/:noun/:readOneTarget{.*}', async c => {
   const start = new Date()
-  let { noun, target } = c.req.param()
+  let { noun, readOneTarget } = c.req.param()
 
-  let id = decodeURIComponent(target)
+  let id = decodeURIComponent(readOneTarget)
 
   const result = await router.client
     .db('db')
