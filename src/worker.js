@@ -28,7 +28,7 @@ export default {
       }
     )
 
-    const hostname = 'northwind.graphdl.org' //new URL(req.url).hostname
+    const hostname = new URL(req.url).hostname
 
     let graph = await client
       .db('db')
