@@ -37,14 +37,13 @@ router.use('*', async (c, next) => {
 
   const { user, hostname, rootPath, pathSegments, query, body } = await env.CTX.fetch(c.req.raw.clone()).then(res => res.json())
 
-  console.log(user, body)
-
-  if (!user) {
-    return c.json({
-      error: 'You need to be logged in',
-      link: `https://${hostname}/login`
-    }, 403)
-  }
+  if (!user.authenticated) {
+    if (user?.browser) {
+      return Response.redirect(origin + '/login?redirect_uri=' + encodeURIComponent(req.url))
+    } else {
+      c.json({ api, error: 'Unauthorized', login: origin + '/login' }, { status: 401 })
+    }
+  } 
 
   if (user.role != 'admin') {
     return c.json({
