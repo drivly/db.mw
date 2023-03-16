@@ -9,8 +9,9 @@ import './write.js'
 import router from './router.js'
 
 export const api = {
+  icon: '彡',
   name: 'db.mw',
-  description: '🚀 Multiworld Database',
+  description: '彡 Multiworld Database',
   url: 'https://db.mw/api',
   type: 'https://apis.do/data',
   login: 'https://templates.do/login',
