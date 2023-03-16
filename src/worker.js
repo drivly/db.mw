@@ -28,7 +28,33 @@ export default {
       }
     )
 
-    const hostname = new URL(req.url).hostname
+    const { pathname, hostname } = new URL(req.url)
+
+    const redirectRoutes = [
+      /\/app.*/,
+      /\/docs.*/,
+      /\/_.*/,
+      /\/_next*/,
+    ]
+
+    console.log(
+      pathname,
+      redirectRoutes.map(route => route.test(pathname))
+    )
+
+    // 
+    if (redirectRoutes.some(route => route.test(pathname)) || pathname == '/') {
+      console.log(`https://app.graphdl.org/${hostname}${ pathname.replace('/docs', '') }`)
+
+      return fetch(
+        `https://app.graphdl.org/${hostname}${ pathname.replace('/docs', '') }`,
+        {
+          method: req.method,
+          headers: req.headers,
+          body: req.body,
+        }
+      )
+    }
 
     let graph = await client
       .db('db')

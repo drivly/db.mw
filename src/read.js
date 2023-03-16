@@ -189,6 +189,18 @@ router.get('/api', async c => {
   })
 })
 
+router.get('/me.jpg', async c => {
+  const resp = await fetch(
+    c.user.image || 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y',
+  )
+
+  return new Response(resp.body, {
+    headers: {
+      'Content-Type': 'image/jpeg',
+    }
+  })
+})
+
 router.get('/graph', async c => {
   return c.json({
     api: router.api,
