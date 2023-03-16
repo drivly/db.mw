@@ -44,10 +44,10 @@ export default {
 
     // 
     if (redirectRoutes.some(route => route.test(pathname)) || pathname == '/') {
-      console.log(`https://app.graphdl.org/${hostname}${ pathname.replace('/docs', '') }`)
+      console.log(`https://directory.graphdl.org//${hostname}${ pathname.replace('/docs', '') }`)
 
       return fetch(
-        `https://app.graphdl.org/${hostname}${ pathname.replace('/docs', '') }`,
+        `https://directory.graphdl.org/${hostname}${ pathname.replace('/docs', '') }`,
         {
           method: req.method,
           headers: req.headers,
