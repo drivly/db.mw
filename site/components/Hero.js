@@ -18,7 +18,7 @@ export default function Hero() {
             </a>
           </div>
           <h1 className='mt-10 text-4xl font-bold tracking-tight text-white sm:text-6xl'>
-            Accelerate with the Multi World Database
+            Go Faster with the Multi World Database
           </h1>
           <p className='mt-6 text-lg leading-8 text-gray-300'>
             Leverage the natural expressiveness of the Graph Database World, 

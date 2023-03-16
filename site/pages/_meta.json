@@ -1,20 +1,9 @@
 {
-  "index": "Introduction",
+  "index": "Getting Started",
   "pricing": {
     "title": "Pricing",
     "type": "page"
   },
-  "api": {
-    "title": "API",
-    "type": "page"
-  },
-  "docs": {
-    "title": "Documentation",
-    "type": "page"
-  },
-  "contact": {
-    "title": "Dashboard",
-    "type": "page",
-    "newWindow": true
-  }
+  "API": "API",
+  "SDK": "SDK"
 }
