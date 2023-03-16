@@ -165,7 +165,7 @@ const resolveReverse = (graph, noun, field) => {
   }
 }
 
-router.get('/', async c => {
+router.get('/api', async c => {
   // List all nouns we can access.
 
   const nouns = {}
@@ -183,7 +183,7 @@ router.get('/', async c => {
     },
     data: {
       nouns,
-      graph: c.graph,
+      graph: router.graph,
     },
     user: c.user,
   })
