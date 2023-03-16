@@ -3,10 +3,10 @@ import { Dialog } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 
 const navigation = [
-  { name: 'Features', href: '#' },
-  { name: 'Pricing', href: '#' },
-  { name: 'API & SDK', href: '#' },
-  { name: 'Documentation', href: '#' },
+  { name: 'Features', href: '#features' },
+  { name: 'Pricing', href: '#pricing' },
+  { name: 'API & SDK', href: '/docs/api' },
+  { name: 'Documentation', href: '/docs' },
   // { name: 'Dashboard', href: '#' },
 ]
 
@@ -79,7 +79,7 @@ export default function Header() {
               </div>
               <div className='py-6'>
                 <a
-                  href='#'
+                  href='/login'
                   className='-mx-3 block rounded-lg py-2.5 px-3 text-base font-semibold leading-7 text-white hover:bg-gray-800'
                 >
                   Log in
