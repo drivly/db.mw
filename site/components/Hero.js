@@ -6,13 +6,13 @@ export default function Hero() {
     <div className='relative isolate overflow-hidden bg-gray-900'>
       <div className='mx-auto max-w-7xl px-6 pt-8 pb-8 sm:pb-8 lg:flex lg:pt-48 lg:px-8'>
         <div className='mx-auto max-w-2xl flex-shrink-0 lg:mx-0 lg:max-w-xl lg:pt-8'>
-          <div className='mt-24 sm:mt-32 lg:mt-8'>
+          <div className='mt-16 sm:mt-24 lg:mt-8'>
             <a href='#' className='inline-flex space-x-6'>
               <span className='rounded-full bg-pink-500/10 px-3 py-1 text-sm font-semibold leading-6 text-pink-400 ring-1 ring-inset ring-pink-500/20'>
                 What's new
               </span>
               <span className='inline-flex items-center space-x-2 text-sm font-medium leading-6 text-gray-300'>
-                <span>Now Globally Distributed to 25 Cities</span>
+                <span>Now Globally Replicated</span>
                 <ChevronRightIcon className='h-5 w-5 text-gray-500' aria-hidden='true' />
               </span>
             </a>
@@ -38,7 +38,7 @@ export default function Hero() {
             </a>
           </div>
         </div>
-        <div className='mx-auto mt-16 flex max-w-2xl sm:mt-16 lg:ml-2 lg:mt-0 lg:mr-0 lg:max-w-none lg:flex-none xl:ml-16'>
+        <div className='mx-auto mt-12 flex max-w-2xl sm:mt-12 lg:ml-2 lg:-mt-12 lg:mr-0 lg:max-w-none lg:flex-none xl:ml-16'>
           <div className='max-w-3xl flex-initial sm:max-w-5xl lg:max-w-none'>
             <div
               maxWidth={800}
