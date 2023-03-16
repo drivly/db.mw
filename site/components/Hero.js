@@ -28,20 +28,20 @@ export default function Hero() {
           </p>
           <div className='mt-10 flex items-center gap-x-6'>
             <a
-              href='#'
+              href='/login'
               className='rounded-md bg-pink-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-pink-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink-400'
             >
               Get started
             </a>
-            <a href='#' className='text-sm font-semibold leading-6 text-white'>
+            <a href='#features' className='text-sm font-semibold leading-6 text-white'>
               Learn more <span aria-hidden='true'>→</span>
             </a>
           </div>
         </div>
-        <div className='mx-auto mt-2 flex max-w-2xl sm:mt-24 lg:ml-2 lg:mt-0 lg:mr-0 lg:max-w-none lg:flex-none xl:ml-16'>
+        <div className='mx-auto mt-16 flex max-w-2xl sm:mt-16 lg:ml-2 lg:mt-0 lg:mr-0 lg:max-w-none lg:flex-none xl:ml-16'>
           <div className='max-w-3xl flex-initial sm:max-w-5xl lg:max-w-none'>
             <div
-              width={800}
+              maxWidth={800}
               height={800}
               className='w-[40rem]'
             >
