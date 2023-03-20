@@ -20,7 +20,6 @@ const AdminApp = ({ graph, resources }: any) => {
     <Admin title={graphName} dataProvider={dataProvider} layout={Layout}>
       {graph &&
         resources.map((resource: string, index: Key) => {
-          console.log('resourceadmin', resource)
           // console.log('name', name, 'noun', noun)
           return (
             <Resource

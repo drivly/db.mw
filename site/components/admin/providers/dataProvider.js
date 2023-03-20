@@ -14,8 +14,9 @@ export default {
     console.log('resource', resource)
 
     const request = await httpClient(`${apiUrl}${resource}?expand=true`)
-    const records = json ?  Object?.entries(request?.json?.data)?.map(([key, value]) => {
-      return { id: value['entityId'], ...value }
+    console.log('request', request)
+    const records = request?.json ?  Object?.entries(request?.json?.data)?.map(([key, value]) => {
+      return { id: value['_id'], ...value }
     }) : []
     // console.log('records', records)
     return {
