@@ -13,7 +13,7 @@ import {
   TextField,
   UrlField,
 } from 'react-admin'
-import { Noun } from '../../typings'
+import { Noun } from '../AdminApp'
 import ResourceSublist from './ResourceSublist'
 
 export default function ResourceShow({ graph, noun, name: RESOURCE, link = 'edit' }: any) {
