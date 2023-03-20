@@ -21,16 +21,14 @@ export default function Hero() {
             Go Faster with the Multi World Database
           </h1>
           <p className='mt-6 text-lg leading-8 text-gray-300'>
-            Leverage the natural expressiveness of the Graph Database World, 
-            the flexibility of the Document Database World, 
-            and the constraints with foreign keys and referential integrity 
+            Leverage the natural expressiveness of the Graph Database World, the flexibility of the
+            Document Database World, and the constraints with foreign keys and referential integrity
             of the Relational Database World.
           </p>
           <div className='mt-10 flex items-center gap-x-6'>
             <a
               href='/login'
-              className='rounded-md bg-pink-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-pink-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink-400'
-            >
+              className='rounded-md bg-pink-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-pink-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink-400'>
               Get started
             </a>
             <a href='#features' className='text-sm font-semibold leading-6 text-white'>
@@ -40,12 +38,8 @@ export default function Hero() {
         </div>
         <div className='mx-auto mt-12 flex max-w-2xl sm:mt-12 lg:ml-2 lg:-mt-12 lg:mr-0 lg:max-w-none lg:flex-none xl:ml-16'>
           <div className='max-w-3xl flex-initial sm:max-w-5xl lg:max-w-none'>
-            <div
-              maxWidth={800}
-              height={800}
-              className='w-[40rem]'
-            >
-              <Globe/>
+            <div style={{ height: 'auto', maxWidth: '800px' }} className='w-[40rem]'>
+              <Globe />
             </div>
           </div>
         </div>

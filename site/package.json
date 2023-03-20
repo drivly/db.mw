@@ -21,10 +21,13 @@
     "@headlessui/react": "^1.7.13",
     "@heroicons/react": "^2.0.16",
     "cobe": "^0.6.3",
+    "framer-motion": "^10.6.1",
     "next": "^13.0.6",
     "nextra": "latest",
     "nextra-theme-docs": "latest",
+    "nookies": "^2.5.2",
     "react": "^18.2.0",
+    "react-admin": "^4.8.4",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
