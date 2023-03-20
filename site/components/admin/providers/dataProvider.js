@@ -6,6 +6,10 @@ import { stringify } from 'querystring'
 const apiUrl = '/'
 const httpClient = fetchUtils.fetchJson
 
+function parseId(str) {
+  return str.replace('https://', '').split('/').reverse()[0]
+}
+
 export default {
   getList: async (resource, params) => {
     const { page, perPage } = params?.pagination
@@ -15,9 +19,11 @@ export default {
 
     const request = await httpClient(`${apiUrl}${resource}?expand=true`)
     console.log('request', request)
-    const records = request?.json ?  Object?.entries(request?.json?.data)?.map(([key, value]) => {
-      return { id: value['_id'], ...value }
-    }) : []
+    const records = request?.json
+      ? Object?.entries(request?.json?.data)?.map(([key, value]) => {
+          return { id: parseId(value['_id']), ...value }
+        })
+      : []
     // console.log('records', records)
     return {
       data: records,
@@ -27,7 +33,7 @@ export default {
   getOne: async (resource, params) => {
     // console.log('params', params)
     const record = await httpClient(`${apiUrl}${resource}/${params.id}?expand=true`)
-    return { data: { id: record.json.data.entityId, ...record.json.data } }
+    return { data: { id: parseId(record.json.data._id), ...record.json.data } }
   },
   getMany: async (resource, params) => {
     const query = {
@@ -35,11 +41,13 @@ export default {
     }
 
     const data = await Promise.all(
-      params?.ids?.map(async (id) => await httpClient(`${apiUrl}${resource}/${id}`).then(({ json }) => json.data)),
+      params?.ids?.map(
+        async (id) => await httpClient(`${apiUrl}${resource}/${id}`).then(({ json }) => json.data)
+      )
     )
 
     const records = Object.entries(data).map(([key, value]) => {
-      return { id: value['entityId'], ...value }
+      return { id: parseId(value['_id']), ...value }
     })
     // console.log('getMany data', data)
     return { data: records }
@@ -57,31 +65,32 @@ export default {
     const url = `${apiUrl}${resource}?expand=true&${stringify(query)}`
     const { json } = await httpClient(url)
     const records = Object.entries(json.data).map(([key, value]) => {
-      return { id: value['entityId'], ...value }
+      return { id: parseId(value['_id']), ...value }
     })
     return {
       data: records,
       total: json.totalDocuments,
     }
   },
-  // TODO Create works but the id is not being created on the backend
+
   create: async (resource, params) => {
     const { data } = params
     const { json } = await httpClient(`${apiUrl}${resource}`, {
       method: 'POST',
       body: JSON.stringify(data),
     })
-    console.log('json', json)
-    return { data: { id: json.data.entityId, ...json.data } }
+
+    return { data: { id: parseId(json.data._id), ...json.data } }
   },
   update: async (resource, params) => {
     const { data } = params
-    console.log('params', {params, resource})
+    console.log('params', { params, resource })
+
     const { json } = await httpClient(`${apiUrl}${resource}/${params.id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     })
-    return { data: { id: json.data.entityId, ...json.data } }
+    return { data: { id: parseId(json.data._id), ...json.data } }
   },
   updateMany: async (resource, params) => {
     const { data } = params
@@ -90,7 +99,7 @@ export default {
       body: JSON.stringify(data),
     })
     const records = Object.entries(json.data).map(([key, value]) => {
-      return { id: value['entityId'], ...value }
+      return { id: parseId(value['_id']), ...value }
     })
     return {
       data: records,
