@@ -14,6 +14,11 @@ const config: DocsThemeConfig = {
   footer: {
     text: '彡 DB.MW',
   },
+  useNextSeoProps() {
+    return {
+      titleTemplate: '%s – DB.MW Multi World Database',
+    }
+  }
 }
 
 export default config

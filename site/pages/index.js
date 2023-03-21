@@ -15,7 +15,7 @@ export default function App({graphs}) {
     <main className='scroll-smooth bg-gray-900'>
       <Header />
       <Hero />
-      <Graphs graphs={graphs} />
+      {/* <Graphs graphs={graphs} /> */}
       <Features />
       <FeaturesScreenshot />
       <Stats />
@@ -27,8 +27,8 @@ export default function App({graphs}) {
   )
 }
 
-export async function getStaticProps({ params }) {
-  const graphs = await getGraphs(params?.graph)
-  console.log('AppIndex', graphs)
-  return { props: { graphs } }
-}
+// export async function getStaticProps({ params }) {
+//   const graphs = await getGraphs(params?.graph)
+//   console.log('AppIndex', graphs)
+//   return { props: { graphs } }
+// }
