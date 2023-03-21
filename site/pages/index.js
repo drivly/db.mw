@@ -8,7 +8,7 @@ import Header from '../components/Header'
 import Hero from '../components/Hero'
 import Pricing from '../components/Pricing'
 import Stats from '../components/Stats'
-import getGraphs from '../lib/getGraphs'
+// import getGraphs from '../lib/getGraphs'
 
 export default function App({graphs}) {
   return (
