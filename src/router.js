@@ -39,7 +39,7 @@ router.use('*', async (c, next) => {
 
   if (!user.authenticated) {
     if (user?.browser) {
-      return Response.redirect(hostname + '/login?redirect_uri=' + encodeURIComponent(req.url))
+      return Response.redirect(`https://${hostname}/login?redirect_uri=${encodeURIComponent(req.url)}`)
     } else {
       c.json({ api, error: 'Unauthorized', login: hostname + '/login' }, { status: 401 })
     }
