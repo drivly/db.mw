@@ -88,6 +88,7 @@ DELETE /Developer/:id
 It should be noted that if the ID includes slashes (`/`), it must be URL encoded.
 
 ```yaml
+```
 
 List all available databases 
 
