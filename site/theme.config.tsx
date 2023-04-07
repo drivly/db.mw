@@ -8,12 +8,17 @@ const config: DocsThemeConfig = {
     link: 'https://github.com/shuding/nextra-docs-template',
   },
   chat: {
-    link: 'https://discord.com',
+    link: 'https://discord.gg/NhYuABP9',
   },
   docsRepositoryBase: 'https://github.com/shuding/nextra-docs-template',
   footer: {
     text: '彡 DB.MW',
   },
+  useNextSeoProps() {
+    return {
+      titleTemplate: '%s – DB.MW Multi World Database',
+    }
+  }
 }
 
 export default config
