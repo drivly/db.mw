@@ -1,8 +1,8 @@
 import { MongoFetchClient } from '@drivly/mongo-fetch'
 
 // Import our routes
-import './read.js'
 import './import.js'
+import './read.js'
 import './write.js'
 
 // Now we can import the router with our routes preloaded.
@@ -28,7 +28,7 @@ export default {
       }
     )
 
-    const { pathname, hostname } = new URL(req.url)
+    let { pathname, hostname } = new URL(req.url)
 
     const redirectRoutes = [
       /\/app.*/,
@@ -53,7 +53,19 @@ export default {
           headers: req.headers,
           body: req.body,
         }
-      )
+      ) 
+    }
+
+    // If the first segment in the URL is a hostname, we need to use that.
+    // e.g. /northwind.graphdl.org/customers -> /customers but with the northwind.graphdl.org graph.
+    
+    console.log(
+      pathname.split('/')[1].includes('.')
+    )
+
+    if (pathname.split('/')[1].includes('.')) {
+      hostname = pathname.split('/')[1]
+      pathname = pathname.replace(`/${hostname}`, '')
     }
 
     let graph = await client
@@ -172,8 +184,18 @@ export default {
       throw e
     })
 
+    const fakeReq = new Request(
+      `https://${hostname}${ pathname.replace( hostname + '/', '' ) }?${req?.url?.split('?')[1]}`,
+      req.clone()
+    )
+
+    console.log(
+      '[API] Using graph:', graph._id,
+      fakeReq.url
+    )
+
     try {
-      return await router.fetch(req, env)
+      return await router.fetch(fakeReq, env)
     } catch (err) {
       console.error(err)
       return json({ error: err.message, stack: err.stack }, 500)

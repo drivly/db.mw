@@ -43,8 +43,9 @@ const processResult = (obj, noun, isExpanded) => {
         } else if (ref.includes('->')) {
           const targetNoun = ref.split('->')[0]
           if (isArray) {
-            result[key] = obj[key].map(item => `https://${hostname}/${targetNoun}/${(item.replace(`${obj._graph}/${targetNoun}/`, ''))}`)
+            result[key] = obj[key].map(item => `https://${hostname}/${targetNoun}/${(typeof item == 'object' ? item._id : item.replace(`${obj._graph}/${targetNoun}/`, ''))}`)
           } else {
+            console.log(obj[key], key)
             result[key] = `https://${hostname}/${targetNoun}/${(obj[key].replace(`${obj._graph}/${targetNoun}/`, ''))}`
           }
         } else {
@@ -631,7 +632,10 @@ router.get('/:noun/:readOneTarget{.*}', async c => {
     const spec = router.graph[key]
 
     for (const field in spec) {
-      if (spec[field] == noun) {
+      const { ref } = unwrap(spec[field])
+      if (ref.includes('->')) continue
+
+      if (ref.split('.')[0] == noun) {
         references.push({
           noun: key,
           field,
@@ -645,13 +649,9 @@ router.get('/:noun/:readOneTarget{.*}', async c => {
   for (const reference of references) {
     let _id = id
 
-    try {
-      _id = parseInt(id)
-    } catch (e) {}
-
     const query = {
-      _graph: router.graph._id,
-      _noun: reference.noun
+      //_graph: router.graph._id,
+      //_noun: reference.noun
     }
 
     const refNoun = router.graph[reference.noun]
@@ -663,23 +663,23 @@ router.get('/:noun/:readOneTarget{.*}', async c => {
       query[reference.field] = _id
     }
 
-    const results = await router.client
-      .db('db')
-      .collection('resources')
-      .find(query)
-      .project({
-        _id: 1,
-        _name: 1,
-        _noun: 1,
-        _graph: 1,
-      })
-      .toArray()
+    // const results = await router.client
+    //   .db('db')
+    //   .collection('resources')
+    //   .find(query)
+    //   .project({
+    //     _id: 1,
+    //     _name: 1,
+    //     _noun: 1,
+    //     _graph: 1,
+    //   })
+    //   .toArray()
 
-    referenceData[reference.noun] = {}
+    referenceData[reference.noun] = `https://${c.hostname}/${reference.noun}?${new URLSearchParams(query).toString()}`
 
-    for (const result of results) {
-      referenceData[reference.noun][result._name] = processResult(result, reference.noun, false)
-    }
+    // for (const result of results) {
+    //   referenceData[reference.noun][result._name || result._id] = processResult(result, reference.noun, false)
+    // }
   }
 
   let parsedId = result._id.replace(`${router.graph._id}/${noun}/`, '')
