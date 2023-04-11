@@ -5,12 +5,12 @@ import Logo from './components/Logo'
 const config: DocsThemeConfig = {
   logo: <Logo/>,
   project: {
-    link: 'https://github.com/shuding/nextra-docs-template',
+    link: 'https://github.com/drivly/db.mw',
   },
   chat: {
     link: 'https://discord.gg/NhYuABP9',
   },
-  docsRepositoryBase: 'https://github.com/shuding/nextra-docs-template',
+//   docsRepositoryBase: 'https://github.com/shuding/nextra-docs-template',
   footer: {
     text: '彡 DB.MW',
   },
