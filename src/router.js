@@ -19,23 +19,7 @@ router.use('*', async (c, next) => {
     })
   }
 
-  const patch = new Request(
-    req.url,
-    {
-      // headers are unpacked headers from req
-      headers: {
-        Authorization: req.headers.get('Authorization'),
-        Cookie: req.headers.get('Cookie'),
-        'Content-Type': req.headers.get('Content-Type'),
-        'X-Forwarded-Proto': req.headers.get('X-Forwarded-Proto'),
-        'X-Forwarded-For': req.headers.get('X-Forwarded-For'),
-      },
-      method: req.method,
-      cf: req.cf,
-    }
-  )
-
-  const { user, hostname, rootPath, pathSegments, query, body } = await env.CTX.fetch(c.req.raw.clone()).then(res => res.json())
+  const { user, hostname, rootPath, pathSegments, query, body } = await env.CTX.fetch(req).then(res => res.json())
 
   if (!user.authenticated) {
     if (user?.browser) {
