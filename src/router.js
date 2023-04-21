@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { MongoFetchClient } from '@drivly/mongo-fetch'
+import { MongoFetchClient } from 'mongo-fetch'
 
 const router = new Hono()
 
