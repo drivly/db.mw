@@ -20,10 +20,10 @@
   },
   "homepage": "https://github.com/drivly/db.mw#readme",
   "dependencies": {
-    "@drivly/mongo-fetch": "^1.4.0",
     "esbuild": "^0.17.11",
     "hono": "^3.0.3",
     "js-yaml": "^4.1.0",
+    "mongo-fetch": "^1.5.0",
     "nanoid": "^4.0.1"
   }
 }
